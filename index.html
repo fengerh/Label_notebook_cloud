@@ -3,255 +3,200 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes, viewport-fit=cover">
-  <title>云端标签笔记 v20260505.1840</title>
-  <!-- Font Awesome -->
+  <title>云端标签笔记 v20260505.2300</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* ========== 原有样式稍作增强 ========== */
-    * {
-      margin: 0; padding: 0; box-sizing: border-box;
-      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-    }
-    body {
-      background: #f4f6fa; min-height: 100vh; display: flex; justify-content: center;
-      padding: 8px 6px;
-    }
-    @media (min-width: 640px) { body { padding: 20px; } }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    body { background:#f4f6fa; min-height:100vh; display:flex; justify-content:center; padding:8px 6px; }
+    @media(min-width:640px){ body{padding:20px;} }
 
-    /* 登录容器 */
-    .auth-container {
-      max-width: 420px; width: 100%; background: white; border-radius: 26px;
-      box-shadow: 0 16px 32px rgba(0,0,0,0.04); padding: 24px; margin: auto;
-      display: flex; flex-direction: column; gap: 16px;
-    }
-    .auth-container h2 { font-size: 1.6rem; color: #1e293b; }
-    .auth-container input {
-      padding: 12px; border: 1.5px solid #dce2ec; border-radius: 18px; font-size: 1rem;
-    }
-    .auth-container button {
-      padding: 12px; border-radius: 40px; font-weight: 600; border: none;
-      background: #5b6cf7; color: white; cursor: pointer; font-size: 1rem;
-    }
+    .auth-container { max-width:420px; width:100%; background:white; border-radius:26px; box-shadow:0 16px 32px rgba(0,0,0,0.04); padding:24px; margin:auto; display:flex; flex-direction:column; gap:16px; }
+    .auth-container h2 { font-size:1.6rem; color:#1e293b; }
+    .auth-container label { display:flex; flex-direction:column; gap:6px; font-size:0.8rem; color:#5e6f8d; }
+    .auth-container input { padding:12px; border:1.5px solid #dce2ec; border-radius:18px; font-size:1rem; }
+    .auth-container button { padding:12px; border-radius:40px; font-weight:600; border:none; background:#5b6cf7; color:white; cursor:pointer; font-size:1rem; }
+    .password-mask { -webkit-text-security:disc;}
 
-    /* 主界面隐藏/显示 */
-    .app-container { display: none; }
-    .app-container.logged-in { display: flex; }
+    .app-container { display:none; }
+    .app-container.logged-in { display:flex; }
+    .app-container { max-width:1400px; width:100%; background:white; border-radius:26px; box-shadow:0 16px 32px rgba(0,0,0,0.04); overflow:hidden; flex-direction:column; height:calc(100vh - 16px); min-height:600px; }
+    @media(min-width:640px){ .app-container{ height:95vh; } }
 
-    /* 其余样式原封不动（增加了contenteditable编辑器样式） */
-    .app-container {
-      max-width: 1400px; width: 100%; background: white; border-radius: 26px;
-      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.04); overflow: hidden;
-      display: flex; flex-direction: column; height: calc(100vh - 16px); min-height: 600px;
-    }
-    @media (min-width: 640px) { .app-container { height: 95vh; } }
+    .app-header { padding:14px 16px 8px 16px; border-bottom:1px solid #eef1f5; display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+    .title-wrapper { display:flex; align-items:center; gap:8px; flex:1; }
+    .app-header i { color:#5b6cf7; font-size:1.6rem; background:#e9ebff; padding:6px; border-radius:16px; }
+    .editable-title { font-size:1.4rem; font-weight:650; color:#1e293b; border:2px solid transparent; border-radius:16px; padding:4px 10px; background:transparent; outline:none; line-height:1.3; max-width:100%; }
+    .editable-title:hover, .editable-title:focus { border-color:#5b6cf7; background:white; }
+    .toolbar-actions { display:flex; gap:4px; margin-left:auto; }
+    .icon-btn { background:white; border:1.5px solid #e2e8f0; border-radius:40px; padding:8px 12px; font-size:0.85rem; font-weight:500; color:#334155; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+    .icon-btn i { color:#5b6cf7; font-size:1rem; }
+    @media(max-width:480px){ .icon-btn span{display:none;} .icon-btn{padding:8px 12px;} }
 
-    .app-header {
-      padding: 14px 16px 8px 16px; border-bottom: 1px solid #eef1f5;
-      display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
-    }
-    @media (min-width: 640px) { .app-header { padding: 20px 24px 12px 24px; } }
+    .add-note-wrapper { background:#fafbff; border-bottom:1px solid #e9ecf2; }
+    .add-note-toggle { padding:10px 16px; cursor:pointer; display:flex; align-items:center; gap:12px; font-weight:600; color:#2c3e50; user-select:none; }
+    .add-note-toggle i { color:#5b6cf7; font-size:1.2rem; transition:transform 0.2s; }
+    .add-note-toggle .toggle-text { flex:1; font-size:1rem; }
+    .add-note-panel { padding:0 16px 16px 16px; display:none; }
+    .add-note-wrapper.expanded .add-note-panel { display:block; }
+    .add-note-wrapper.expanded .fa-chevron-down { transform:rotate(180deg); }
 
-    .title-wrapper { display: flex; align-items: center; gap: 8px; flex: 1; }
-    .app-header i { color: #5b6cf7; font-size: 1.6rem; background: #e9ebff; padding: 6px; border-radius: 16px; }
-    .editable-title {
-      font-size: 1.4rem; font-weight: 650; color: #1e293b; border: 2px solid transparent;
-      border-radius: 16px; padding: 4px 10px; background: transparent; outline: none;
-      line-height: 1.3; max-width: 100%;
-    }
-    .editable-title:hover, .editable-title:focus { border-color: #5b6cf7; background: white; }
-    .toolbar-actions { display: flex; gap: 4px; margin-left: auto; }
-    .icon-btn {
-      background: white; border: 1.5px solid #e2e8f0; border-radius: 40px;
-      padding: 8px 12px; font-size: 0.85rem; font-weight: 500; color: #334155;
-      cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
-    }
-    .icon-btn i { color: #5b6cf7; font-size: 1rem; }
-    @media (max-width: 480px) { .icon-btn span { display: none; } .icon-btn { padding: 8px 12px; } }
+    .add-form { display:flex; flex-direction:column; gap:12px; }
+    .form-row { display:flex; gap:12px 16px; width:100%; }
+    .form-group { display:flex; flex-direction:column; flex:1; }
+    .form-group label { font-size:0.75rem; font-weight:600; text-transform:uppercase; color:#5e6f8d; margin-bottom:4px; }
+    .form-group input, .form-group textarea { padding:10px 12px; border:1.5px solid #dce2ec; border-radius:18px; font-size:0.95rem; background:white; width:100%; }
+    .tag-input-wrapper { display:flex; width:100%; align-items:center; gap:4px; }
+    .tag-input-wrapper input { flex:1; }
+    .color-selector { display:flex; align-items:center; }
+    .color-btn { width:36px; height:36px; border-radius:18px; border:2px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.1); cursor:pointer; background:#ccc; transition:transform 0.1s; }
+    .color-btn:hover { transform:scale(1.05); }
+    .color-picker-dropdown { position:relative; display:inline-block; }
+    .color-options { display:none; position:absolute; right:0; top:42px; background:white; border-radius:20px; box-shadow:0 8px 20px rgba(0,0,0,0.12); padding:8px; z-index:100; grid-template-columns:repeat(4,1fr); gap:6px; border:1px solid #e2e8f0; }
+    .color-options.show { display:grid; }
+    .color-option { width:32px; height:32px; border-radius:16px; cursor:pointer; border:2px solid transparent; transition:border 0.1s; }
+    .color-option:hover { border-color:#5b6cf7; }
 
-    /* 折叠面板 */
-    .add-note-wrapper { background: #fafbff; border-bottom: 1px solid #e9ecf2; }
-    .add-note-toggle {
-      padding: 10px 16px; cursor: pointer; display: flex; align-items: center;
-      gap: 12px; font-weight: 600; color: #2c3e50; user-select: none;
-    }
-    .add-note-toggle i { color: #5b6cf7; font-size: 1.2rem; transition: transform 0.2s; }
-    .add-note-toggle .toggle-text { flex: 1; font-size: 1rem; }
-    .add-note-panel { padding: 0 16px 16px 16px; display: none; }
-    .add-note-wrapper.expanded .add-note-panel { display: block; }
-    .add-note-wrapper.expanded .fa-chevron-down { transform: rotate(180deg); }
+    .btn { padding:10px 20px; border-radius:40px; font-weight:600; border:1.5px solid #d0d9e8; background:white; cursor:pointer; font-size:0.95rem; }
+    .btn-primary { background:#5b6cf7; border-color:#5b6cf7; color:white; }
+    .btn-secondary { background:white; border-color:#d0d9e8; color:#334155; }
+    .form-actions { display:flex; gap:10px; align-items:center; justify-content:flex-end; }
+    @media(max-width:640px){ .form-row{flex-direction:column;gap:10px;} .form-group{width:100%;} .add-note-panel{padding:0 12px 12px 12px;} .btn{width:100%;justify-content:center;} .form-actions{flex-direction:column;gap:8px;} }
 
-    .add-form { display: flex; flex-direction: column; gap: 12px; }
-    .form-row { display: flex; gap: 12px 16px; width: 100%; }
-    .form-group { display: flex; flex-direction: column; flex: 1; }
-    .form-group label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #5e6f8d; margin-bottom: 4px; }
-    .form-group input, .form-group textarea {
-      padding: 10px 12px; border: 1.5px solid #dce2ec; border-radius: 18px;
-      font-size: 0.95rem; background: white; width: 100%;
-    }
-    .tag-input-wrapper { display: flex; width: 100%; align-items: center; gap: 4px; }
-    .tag-input-wrapper input { flex: 1; }
-    .color-selector { display: flex; align-items: center; }
-    .color-btn {
-      width: 36px; height: 36px; border-radius: 18px; border: 2px solid white;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1); cursor: pointer; background: #ccc;
-      transition: transform 0.1s;
-    }
-    .color-btn:hover { transform: scale(1.05); }
-    .color-picker-dropdown { position: relative; display: inline-block; }
-    .color-options {
-      display: none; position: absolute; right: 0; top: 42px; background: white;
-      border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.12); padding: 8px;
-      z-index: 100; grid-template-columns: repeat(4, 1fr); gap: 6px;
-      border: 1px solid #e2e8f0;
-    }
-    .color-options.show { display: grid; }
-    .color-option {
-      width: 32px; height: 32px; border-radius: 16px; cursor: pointer;
-      border: 2px solid transparent; transition: border 0.1s;
-    }
-    .color-option:hover { border-color: #5b6cf7; }
+    #noteContentEditor { min-height:120px; max-height: 400px;overflow-y: auto;border:1.5px solid #dce2ec; border-radius:18px; padding:10px 12px; font-size:0.95rem; background:white; outline:none; line-height:1.6; }
+    #noteContentEditor:focus { border-color:#5b6cf7; }
+    #noteContentEditor img {
+        width: 160px;               /* 固定显示宽度，高自动等比 */
+        height: auto;
+        max-width: 100%;            /* 如果屏幕更窄也能自适应 */
+        border-radius: 10px;
+        margin: 6px 0;
+        cursor: default;
+        display: block;
+        }
+    .editor-toolbar { display:flex; gap:8px; margin-bottom:8px; }
+    .editor-toolbar button { background:#f1f4f9; border:1px solid #dce2ec; border-radius:20px; padding:6px 14px; font-size:0.85rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
 
-    .btn {
-      padding: 10px 20px; border-radius: 40px; font-weight: 600;
-      border: 1.5px solid #d0d9e8; background: white; cursor: pointer; font-size: 0.95rem;
-    }
-    .btn-primary { background: #5b6cf7; border-color: #5b6cf7; color: white; }
-    .btn-secondary { background: white; border-color: #d0d9e8; color: #334155; }
-    .form-actions { display: flex; gap: 10px; align-items: center; justify-content: flex-end; }
+    .filter-section { padding:8px 16px; display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; border-bottom:1px solid #eef1f5; background:white; }
+    .tag-filters { display:flex; flex-wrap:wrap; gap:6px; }
+    .tag-btn { background:#f1f4f9; border:none; padding:5px 14px; border-radius:40px; font-size:0.8rem; font-weight:500; cursor:pointer; }
+    .tag-btn.active { background:#1e293b; color:white; }
 
-    @media (max-width: 640px) {
-      .form-row { flex-direction: column; gap: 10px; }
-      .form-group { width: 100%; }
-      .add-note-panel { padding: 0 12px 12px 12px; }
-      .btn { width: 100%; justify-content: center; }
-      .form-actions { flex-direction: column; gap: 8px; }
-    }
+    .main-layout { display:flex; flex:1; overflow:hidden; }
+    @media(max-width:640px){ .main-layout{flex-direction:column;} }
 
-    /* 编辑器 */
-    #noteContentEditor {
-      min-height: 120px; border: 1.5px solid #dce2ec; border-radius: 18px;
-      padding: 10px 12px; font-size: 0.95rem; background: white; outline: none;
-      line-height: 1.6;
-    }
-    #noteContentEditor:focus { border-color: #5b6cf7; }
-    .editor-toolbar { display: flex; gap: 8px; margin-bottom: 8px; }
-    .editor-toolbar button {
-      background: #f1f4f9; border: 1px solid #dce2ec; border-radius: 20px;
-      padding: 6px 14px; font-size: 0.85rem; cursor: pointer; display: inline-flex;
-      align-items: center; gap: 6px;
-    }
+    .toc-sidebar { width:260px; background:#f4f7fc; border-right:1px solid #e9ecf2; display:flex; flex-direction:column; overflow:hidden; }
+    @media(min-width:641px){ .toc-sidebar{overflow-y:auto;} }
+    @media(max-width:640px){ .toc-sidebar{width:100%; border-right:none; border-bottom:1px solid #e9ecf2; max-height:40vh; transition:max-height 0.2s;} .toc-sidebar.collapsed{max-height:52px;} }
 
-    /* 筛选栏、目录、笔记展示不变 */
-    .filter-section {
-      padding: 8px 16px; display: flex; align-items: center; flex-wrap: wrap;
-      gap: 8px 12px; border-bottom: 1px solid #eef1f5; background: white;
-    }
-    .tag-filters { display: flex; flex-wrap: wrap; gap: 6px; }
-    .tag-btn {
-      background: #f1f4f9; border: none; padding: 5px 14px; border-radius: 40px;
-      font-size: 0.8rem; font-weight: 500; cursor: pointer;
-    }
-    .tag-btn.active { background: #1e293b; color: white; }
+    .toc-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#f4f7fc; border-bottom:1px dashed #d7dfe9; }
+    .toc-header-left { display:flex; align-items:center; gap:8px; }
+    .toc-header-left h2 { font-size:1rem; font-weight:600; }
+    .note-count { background:#e6eaff; padding:4px 10px; border-radius:30px; font-size:0.8rem; }
+    .toc-toggle-btn { background:none; border:none; font-size:1.2rem; color:#5b6cf7; cursor:pointer; padding:6px; display:flex; align-items:center; }
+    @media(min-width:641px){ .toc-toggle-btn{display:none;} }
 
-    .main-layout { display: flex; flex: 1; overflow: hidden; }
-    @media (max-width: 640px) { .main-layout { flex-direction: column; } }
+    .toc-list-container { flex:1; overflow-y:auto; padding:8px 12px 12px 12px; }
+    .toc-sidebar.collapsed .toc-list-container { display:none; }
+    .toc-list { list-style:none; display:flex; flex-direction:column; gap:4px; }
+    .toc-item { padding:8px 10px; background:white; border-radius:14px; border:1px solid #edf1f8; cursor:pointer; display:flex; align-items:center; gap:8px; }
+    .toc-tag-dot { width:10px; height:10px; border-radius:10px; background:#aaa; }
+    .toc-title { font-weight:540; font-size:0.9rem; word-break:break-word; flex:1; }
 
-    .toc-sidebar {
-      width: 260px; background: #f4f7fc; border-right: 1px solid #e9ecf2;
-      display: flex; flex-direction: column; overflow: hidden;
+    .notes-display { flex:1; overflow-y:auto; padding:14px 14px; background:#ffffff; scroll-behavior:smooth; }
+    @media(min-width:640px){ .notes-display{padding:22px 24px;} }
+    .notes-container { display:flex; flex-direction:column; gap:14px; max-width:900px; }
+    .note-card { background:white; border-radius:20px; padding:16px 16px; border:1px solid #eef2f8; scroll-margin-top:16px; }
+    .note-card:nth-child(even) { background:#fafcff; }
+    .note-card:target { border-left:5px solid #5b6cf7; background:#fcfdff !important; }
+    .note-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:10px; gap:8px; }
+    .note-title { font-size:1.3rem; font-weight:650; color:#0f1a2e; }
+    .note-tag { background:#eef2ff; color:#3f4d9e; padding:4px 12px; border-radius:40px; font-size:0.75rem; }
+    .note-content { color:#2e405b; line-height:1.6; margin:10px 0 14px; word-wrap:break-word; }
+    .note-content img { max-width:100%; height:auto; border-radius:12px; margin:8px 0; }
+    /* 图片按钮样式 */
+    .img-btn-wrapper {
+      display: inline-block;
+      background: #f1f4f9;
+      border-radius: 12px;
+      padding: 6px 10px;
+      margin: 4px 0;
+      cursor: pointer;
+      color: #5b6cf7;
+      font-size: 0.9rem;
     }
-    @media (min-width: 641px) { .toc-sidebar { overflow-y: auto; } }
-    @media (max-width: 640px) {
-      .toc-sidebar {
-        width: 100%; border-right: none; border-bottom: 1px solid #e9ecf2;
-        max-height: 40vh; transition: max-height 0.2s;
-      }
-      .toc-sidebar.collapsed { max-height: 52px; }
+    .img-btn-wrapper i { margin-right: 6px; }
+
+    /* 灯箱 */
+    .lightbox-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+    .lightbox-overlay.active { display: flex; }
+    .lightbox-overlay img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
     }
 
-    .toc-header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 16px; background: #f4f7fc; border-bottom: 1px dashed #d7dfe9;
-    }
-    .toc-header-left { display: flex; align-items: center; gap: 8px; }
-    .toc-header-left h2 { font-size: 1rem; font-weight: 600; }
-    .note-count { background: #e6eaff; padding: 4px 10px; border-radius: 30px; font-size: 0.8rem; }
-    .toc-toggle-btn {
-      background: none; border: none; font-size: 1.2rem; color: #5b6cf7;
-      cursor: pointer; padding: 6px; display: flex; align-items: center;
-    }
-    @media (min-width: 641px) { .toc-toggle-btn { display: none; } }
+    .note-actions { display:flex; gap:8px; justify-content:flex-end; }
+    .edit-btn, .delete-btn { background:none; border:1px solid #e2e8f0; padding:5px 14px; border-radius:40px; font-size:0.8rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+    .edit-btn { color:#2c3e50; border-color:#d0d9e8; }
+    .delete-btn { color:#b53b3b; border-color:#f1d7d9; }
 
-    .toc-list-container { flex: 1; overflow-y: auto; padding: 8px 12px 12px 12px; }
-    .toc-sidebar.collapsed .toc-list-container { display: none; }
+    .empty-msg { text-align:center; padding:30px; color:#7f8fa3; }
+    .hidden-file-input { display:none; }
+    .editing-indicator { background:#eef2ff; color:#4355e8; padding:4px 12px; border-radius:20px; font-size:0.8rem; margin-right:auto; }
+    .user-area { display:flex; align-items:center; gap:10px; }
+    .user-email { font-size:0.85rem; color:#5b6cf7; }
 
-    .toc-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
-    .toc-item {
-      padding: 8px 10px; background: white; border-radius: 14px;
-      border: 1px solid #edf1f8; cursor: pointer; display: flex; align-items: center; gap: 8px;
-    }
-    .toc-tag-dot { width: 10px; height: 10px; border-radius: 10px; background: #aaa; }
-    .toc-title { font-weight: 540; font-size: 0.9rem; word-break: break-word; flex: 1; }
+    .img-btn-wrapper {
+        display: inline-block;
+        background: #f1f4f9;
+        border-radius: 12px;
+        padding: 4px 10px;
+        margin: 4px 2px;
+        cursor: pointer;
+        color: #5b6cf7;
+        font-size: 0.9rem;
+        user-select: none;
+        }
+        .img-btn-wrapper:hover {
+        background: #e6eaff;
+        }
+        .img-delete-btn:hover {
+        color: red !important;
+        }
 
-    .notes-display {
-      flex: 1; overflow-y: auto; padding: 14px 14px; background: #ffffff;
-      scroll-behavior: smooth;
-    }
-    @media (min-width: 640px) { .notes-display { padding: 22px 24px; } }
-    .notes-container { display: flex; flex-direction: column; gap: 14px; max-width: 900px; }
-    .note-card {
-      background: white; border-radius: 20px; padding: 16px 16px;
-      border: 1px solid #eef2f8; scroll-margin-top: 16px;
-    }
-    .note-card:nth-child(even) { background: #fafcff; }
-    .note-card:target { border-left: 5px solid #5b6cf7; background: #fcfdff !important; }
-    .note-header {
-      display: flex; align-items: flex-start; justify-content: space-between;
-      margin-bottom: 10px; gap: 8px;
-    }
-    .note-title { font-size: 1.3rem; font-weight: 650; color: #0f1a2e; }
-    .note-tag { background: #eef2ff; color: #3f4d9e; padding: 4px 12px; border-radius: 40px; font-size: 0.75rem; }
-    .note-content {
-      color: #2e405b; line-height: 1.6; margin: 10px 0 14px;
-      word-wrap: break-word;
-    }
-    .note-content img { max-width: 100%; height: auto; border-radius: 12px; margin: 8px 0; }
-    .note-actions { display: flex; gap: 8px; justify-content: flex-end; }
-    .edit-btn, .delete-btn {
-      background: none; border: 1px solid #e2e8f0; padding: 5px 14px;
-      border-radius: 40px; font-size: 0.8rem; cursor: pointer; display: inline-flex;
-      align-items: center; gap: 6px;
-    }
-    .edit-btn { color: #2c3e50; border-color: #d0d9e8; }
-    .delete-btn { color: #b53b3b; border-color: #f1d7d9; }
-
-    .empty-msg { text-align: center; padding: 30px; color: #7f8fa3; }
-    .hidden-file-input { display: none; }
-    .editing-indicator {
-      background: #eef2ff; color: #4355e8; padding: 4px 12px;
-      border-radius: 20px; font-size: 0.8rem; margin-right: auto;
-    }
-    .user-area { display: flex; align-items: center; gap: 10px; }
-    .user-email { font-size: 0.85rem; color: #5b6cf7; }
   </style>
 </head>
 <body>
 
-<!-- 登录界面 -->
 <div id="authContainer" class="auth-container">
   <h2><i class="fas fa-user-circle"></i> 登录笔记</h2>
-  <input type="email" id="authEmail" placeholder="邮箱地址" autocomplete="email">
-  <input type="password" id="authPassword" placeholder="密码" autocomplete="current-password">
+  <label>
+    <span>邮箱</span>
+    <input type="email" id="authEmail" placeholder="your@email.com" autocomplete="email" inputmode="email" autocorrect="off">
+  </label>
+  <label>
+    <span>密码</span>
+    <input type="text" id="authPassword" placeholder="••••••••" autocomplete="off" inputmode="text" autocorrect="off" autocapitalize="off" class="password-mask">
+  </label>
   <div style="display:flex; gap:8px;">
     <button id="signInBtn" style="flex:1;">登录</button>
     <button id="signUpBtn" style="flex:1; background:#eef2ff; color:#5b6cf7;">注册</button>
   </div>
-  <p style="font-size:0.75rem; color:#7f8fa3;">注册后自动登录（请在 Supabase 中关闭邮箱确认）</p>
+  <p style="font-size:0.75rem; color:#7f8fa3; margin-top:8px;">
+    <span id="forgotPasswordBtn" style="cursor:pointer; color:#5b6cf7;">忘记密码？</span>
+  </p>
 </div>
 
-<!-- 主界面 -->
 <div class="app-container" id="appContainer">
   <div class="app-header">
     <div class="title-wrapper">
@@ -263,10 +208,10 @@
       <button class="icon-btn" id="logoutBtn" title="退出登录"><i class="fas fa-sign-out-alt"></i></button>
     </div>
     <div class="toolbar-actions">
-      <button class="icon-btn" id="exportJsonBtn" title="导出JSON"><i class="fas fa-file-code"></i><span>JSON</span></button>
-      <button class="icon-btn" id="exportCsvBtn" title="导出CSV (Excel)"><i class="fas fa-file-csv"></i><span>CSV</span></button>
-      <button class="icon-btn" id="importBtn" title="导入JSON/CSV"><i class="fas fa-upload"></i><span>导入</span></button>
-      <input type="file" id="importFileInput" accept=".json,.csv,application/json,text/csv" class="hidden-file-input">
+      <button class="icon-btn" id="exportJsonBtn"><i class="fas fa-file-code"></i><span>JSON</span></button>
+      <button class="icon-btn" id="exportCsvBtn"><i class="fas fa-file-csv"></i><span>CSV</span></button>
+      <button class="icon-btn" id="importBtn"><i class="fas fa-upload"></i><span>导入</span></button>
+      <input type="file" id="importFileInput" accept=".json,.csv" class="hidden-file-input">
     </div>
   </div>
 
@@ -289,7 +234,7 @@
               <input type="text" id="noteTagInput" list="tagDatalist" placeholder="工作/学习">
               <div class="color-selector">
                 <div class="color-picker-dropdown" id="colorPickerDropdown">
-                  <div class="color-btn" id="selectedColorBtn" style="background: #5b6cf7;"></div>
+                  <div class="color-btn" id="selectedColorBtn" style="background:#5b6cf7;"></div>
                   <div class="color-options" id="colorOptions"></div>
                 </div>
               </div>
@@ -301,7 +246,7 @@
           <label>内容</label>
           <div class="editor-toolbar">
             <button type="button" id="insertImageBtn"><i class="far fa-image"></i> 插入图片</button>
-            <input type="file" id="imageFileInput" accept="image/*" capture="environment" class="hidden-file-input">
+            <input type="file" id="imageFileInput" accept="image/*" class="hidden-file-input">
           </div>
           <div id="noteContentEditor" contenteditable="true" placeholder="写点什么……"></div>
         </div>
@@ -328,39 +273,37 @@
           <h2>目录</h2>
           <span class="note-count" id="noteCountDisplay">0</span>
         </div>
-        <button class="toc-toggle-btn" id="tocToggleBtn" title="折叠/展开目录">
+        <button class="toc-toggle-btn" id="tocToggleBtn">
           <i class="fas fa-chevron-up" id="tocToggleIcon"></i>
         </button>
       </div>
       <div class="toc-list-container" id="tocListContainer"></div>
     </div>
-
     <div class="notes-display">
       <div class="notes-container" id="notesContainer"></div>
     </div>
   </div>
 </div>
 
+<!-- 图片灯箱 -->
+<div class="lightbox-overlay" id="lightboxOverlay">
+  <img id="lightboxImage" src="" alt="图片预览">
+</div>
+
 <script>
   (function(){
     "use strict";
 
-    // ⚠️ 请将下面两个常量替换为你的 Supabase 项目信息
+    // ⚠️ 替换为你的 Supabase 信息
     const SUPABASE_URL = 'https://vcqkcfqajjtvoyotevdc.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    const PRESET_COLORS = ['#e05b6c', '#f39c12', '#2ecc71', '#3498db', '#9b59b6', '#1abc9c', '#e67e22', '#95a5a6'];
+    const PRESET_COLORS = ['#e05b6c','#f39c12','#2ecc71','#3498db','#9b59b6','#1abc9c','#e67e22','#95a5a6'];
     const DEFAULT_TAG_COLOR = '#5b6cf7';
+    let notes = [], currentTag='全部', editingId=null, tagColorMap={}, currentUser=null;
 
-    let notes = [];
-    let currentTag = '全部';
-    let editingId = null;
-    let tagColorMap = {};
-    let currentUser = null;
-
-    // DOM 元素（部分可能重名，已调整）
+    // DOM 元素
     const authContainer = document.getElementById('authContainer');
     const appContainer = document.getElementById('appContainer');
     const mainTitleEl = document.getElementById('mainTitle');
@@ -372,6 +315,7 @@
     const tagFilterContainer = document.getElementById('tagFilterContainer');
     const tocContainer = document.getElementById('tocListContainer');
     const notesContainer = document.getElementById('notesContainer');
+
     const noteCountSpan = document.getElementById('noteCountDisplay');
     const exportJsonBtn = document.getElementById('exportJsonBtn');
     const exportCsvBtn = document.getElementById('exportCsvBtn');
@@ -397,37 +341,21 @@
     const authPassword = document.getElementById('authPassword');
     const signInBtn = document.getElementById('signInBtn');
     const signUpBtn = document.getElementById('signUpBtn');
-
+    const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+    const lightboxOverlay = document.getElementById('lightboxOverlay');
+    const lightboxImage = document.getElementById('lightboxImage');
     let currentSelectedColor = DEFAULT_TAG_COLOR;
 
-    // ========== 1. 登录/注册逻辑 ==========
-    async function handleSignIn() {
-      const email = authEmail.value.trim();
-      const pw = authPassword.value;
-      if (!email || !pw) return alert('请输入邮箱和密码');
-      const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
-      if (error) alert('登录失败: ' + error.message);
-    }
-    async function handleSignUp() {
-      const email = authEmail.value.trim();
-      const pw = authPassword.value;
-      if (!email || !pw) return alert('请输入邮箱和密码');
-      const { error } = await supabase.auth.signUp({ email, password: pw });
-      if (error) alert('注册失败: ' + error.message);
-      else alert('注册成功！已自动登录（若需邮箱确认请检查收件箱）');
-    }
-    async function handleLogout() {
-      await supabase.auth.signOut();
-    }
-
+    // ---------- 认证逻辑 ----------
     async function refreshAuthUI() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabaseClient.auth.getUser();
       currentUser = user;
       if (user) {
         authContainer.style.display = 'none';
         appContainer.classList.add('logged-in');
         userEmailDisplay.textContent = user.email;
         await loadNotes();
+        await loadAppTitle();
       } else {
         authContainer.style.display = 'flex';
         appContainer.classList.remove('logged-in');
@@ -436,45 +364,77 @@
       }
     }
 
-    // 监听认证状态变化
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        refreshAuthUI();
-      } else if (event === 'SIGNED_OUT') {
-        refreshAuthUI();
-      }
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') refreshAuthUI();
+      else if (event === 'SIGNED_OUT') refreshAuthUI();
     });
+
+    async function handleSignIn() {
+      const email = authEmail.value.trim();
+      const pw = authPassword.value;
+      if (!email || !pw) return alert('请输入邮箱和密码');
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password: pw });
+      if (error) alert('登录失败: ' + error.message);
+      else await refreshAuthUI();
+    }
+
+    async function handleSignUp() {
+      const email = authEmail.value.trim();
+      const pw = authPassword.value;
+      if (!email || !pw) return alert('请输入邮箱和密码');
+      const { data, error } = await supabaseClient.auth.signUp({ email, password: pw });
+      if (error) {
+        alert('注册失败: ' + error.message);
+        console.error(error);
+      } else {
+        if (data.user && data.session) alert('注册成功，已自动登录');
+        else alert('注册成功！如果您关闭了邮箱确认，应该已自动登录。');
+        await refreshAuthUI();
+      }
+    }
+
+    async function handleLogout() {
+      await supabaseClient.auth.signOut();
+    }
+
+    async function handleForgotPassword() {
+      const email = authEmail.value.trim();
+      if (!email) return alert('请在上方输入您的邮箱地址');
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.href
+      });
+      if (error) alert('发送重置邮件失败: ' + error.message);
+      else alert('密码重置邮件已发送，请查收（可能在垃圾箱）。');
+    }
 
     signInBtn.addEventListener('click', handleSignIn);
     signUpBtn.addEventListener('click', handleSignUp);
     logoutBtn.addEventListener('click', handleLogout);
-    authPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSignIn(); });
+    forgotPasswordBtn.addEventListener('click', handleForgotPassword);
+    authPassword.addEventListener('keydown', e => { if(e.key==='Enter') handleSignIn(); });
 
-    // ========== 2. 数据操作（Supabase） ==========
+    // ---------- 数据操作 ----------
     async function loadNotes() {
       if (!currentUser) return;
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('notes')
         .select('*')
         .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false });
       if (error) { console.error(error); return; }
       notes = data || [];
-
-      // 加载颜色映射
-      const { data: colorRows } = await supabase
+      const { data: colorRows } = await supabaseClient
         .from('user_tag_colors')
         .select('*')
         .eq('user_id', currentUser.id);
       tagColorMap = {};
-      (colorRows || []).forEach(row => { tagColorMap[row.tag] = row.color; });
-
+      (colorRows||[]).forEach(row => { tagColorMap[row.tag] = row.color; });
       renderAll();
     }
 
     async function syncTagColor(tag, color) {
-      if (!currentUser || tag === '未分类') return;
-      await supabase.from('user_tag_colors').upsert({
+      if (!currentUser || tag==='未分类') return;
+      await supabaseClient.from('user_tag_colors').upsert({
         user_id: currentUser.id,
         tag: tag,
         color: color
@@ -482,84 +442,148 @@
     }
 
     async function saveNoteToDB(title, tag, content) {
-      if (!title.trim() || !content.trim()) return false;
-      const noteData = {
+    if (!title.trim() || !content.trim()) return false;
+    const noteData = {
         user_id: currentUser.id,
         title: title.trim(),
         content: content.trim(),
         tag: tag.trim() || '未分类',
         updated_at: new Date().toISOString()
-      };
+    };
 
-      if (editingId) {
-        const { error } = await supabase.from('notes').update(noteData).eq('id', editingId);
+    // 如果是编辑已有笔记，清理不再使用的图片
+    if (editingId) {
+        const oldNote = notes.find(n => n.id === editingId);
+        if (oldNote) {
+        const oldPaths = extractImagePaths(oldNote.content);
+        const newPaths = extractImagePaths(noteData.content);
+        const toRemove = oldPaths.filter(p => !newPaths.includes(p));
+        if (toRemove.length) {
+            const { error: delError } = await supabaseClient.storage
+            .from('notes-images')
+            .remove(toRemove);
+            if (delError) console.warn('清理旧图片部分失败:', delError);
+        }
+        }
+        const { error } = await supabaseClient.from('notes').update(noteData).eq('id', editingId);
         if (error) { alert('更新失败'); return false; }
-      } else {
-        const { error } = await supabase.from('notes').insert(noteData);
+    } else {
+        const { error } = await supabaseClient.from('notes').insert(noteData);
         if (error) { alert('创建失败'); return false; }
+    }
+
+    await syncTagColor(formatTag(noteData.tag), currentSelectedColor);
+    return true;
+    }
+
+    // 从 content HTML 中提取所有属于自己的图片路径
+    function extractImagePaths(content) {
+        const paths = [];
+        // 匹配按钮中的 data-img-src
+        const btnRegex = /<span[^>]+class="[^"]*img-btn-wrapper[^"]*"[^>]+data-img-src="(https:\/\/[^\/]+\/storage\/v1\/object\/public\/notes-images\/([^"]+))"/g;
+        let match;
+        while ((match = btnRegex.exec(content)) !== null) {
+            paths.push(match[2]); // 第二个捕获组是路径部分
+        }
+        // 同时兼容旧的 img 标签
+        const imgRegex = /<img[^>]+src="(https:\/\/[^\/]+\/storage\/v1\/object\/public\/notes-images\/([^"]+))"/g;
+        while ((match = imgRegex.exec(content)) !== null) {
+            if (!paths.includes(match[2])) paths.push(match[2]);
+        }
+        return paths;
+        }
+
+    // 删除笔记时同步删除云存储中的图片
+    async function deleteNoteWithImages(id) {
+      const note = notes.find(n => n.id === id);
+      if (!note) return;
+      const imagePaths = extractImagePaths(note.content);
+      // 先删除数据库记录
+      const { error } = await supabaseClient.from('notes').delete().eq('id', id);
+      if (error) { alert('删除笔记失败'); return; }
+      // 删除关联图片
+      if (imagePaths.length) {
+        const { error: storageError } = await supabaseClient.storage
+          .from('notes-images')
+          .remove(imagePaths);
+        if (storageError) console.warn('图片删除部分失败:', storageError);
       }
-      await syncTagColor(formatTag(noteData.tag), currentSelectedColor);
-      return true;
+      await loadNotes();
     }
 
-    async function deleteNoteFromDB(id) {
-      const { error } = await supabase.from('notes').delete().eq('id', id);
-      if (error) alert('删除失败');
-      else await loadNotes();
+    // ---------- 标题同步 ----------
+    async function loadAppTitle() {
+      if (!currentUser) return;
+      const { data } = await supabaseClient
+        .from('user_settings')
+        .select('app_title')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+      if (data) {
+        mainTitleEl.textContent = data.app_title;
+      } else {
+        await supabaseClient.from('user_settings').upsert({
+          user_id: currentUser.id,
+          app_title: '墨息 · 标签笔记'
+        });
+        mainTitleEl.textContent = '墨息 · 标签笔记';
+      }
     }
 
-    // ========== 3. 图片压缩与上传 ==========
-    async function compressImage(file, maxWidth = 1024, quality = 0.7) {
-      return new Promise((resolve) => {
+    async function saveAppTitle() {
+      if (!currentUser) return;
+      const title = mainTitleEl.textContent.trim() || '墨息 · 标签笔记';
+      await supabaseClient.from('user_settings').upsert({
+        user_id: currentUser.id,
+        app_title: title
+      });
+    }
+
+    // ---------- 图片压缩 (更小体积) ----------
+    async function compressImage(file, maxW=800, quality=0.5) {
+      return new Promise(resolve => {
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          let width = img.width, height = img.height;
-          if (width > maxWidth) {
-            height *= maxWidth / width;
-            width = maxWidth;
-          }
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
+          let w = img.width, h = img.height;
+          if (w > maxW) { h *= maxW/w; w = maxW; }
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          canvas.toBlob(blob => resolve(blob), 'image/jpeg', quality);
         };
         img.src = URL.createObjectURL(file);
       });
     }
 
     async function uploadImage(blob) {
-      if (!currentUser) throw new Error('未登录');
       const fileName = `${currentUser.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
-      const { data, error } = await supabase.storage
+      const { error } = await supabaseClient.storage
         .from('notes-images')
         .upload(fileName, blob, { contentType: 'image/jpeg', upsert: false });
       if (error) throw error;
-      const { data: publicUrlData } = supabase.storage
+      const { data } = supabaseClient.storage
         .from('notes-images')
         .getPublicUrl(fileName);
-      return publicUrlData.publicUrl;
+      return data.publicUrl;
     }
 
     insertImageBtn.addEventListener('click', () => imageFileInput.click());
     imageFileInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+      const file = e.target.files[0]; if (!file) return;
       try {
         insertImageBtn.disabled = true;
         insertImageBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...';
-        const compressed = await compressImage(file);
-        const url = await uploadImage(compressed);
-        // 在光标处插入图片
+        const blob = await compressImage(file);
+        const url = await uploadImage(blob);
         contentEditor.focus();
-        document.execCommand('insertImage', false, url);
-        // 确保图片自适应
-        const imgs = contentEditor.querySelectorAll('img');
-        const lastImg = imgs[imgs.length - 1];
-        if (lastImg) lastImg.style.maxWidth = '100%';
+        // 插入按钮标签（和笔记卡片里完全相同的结构）
+        const btnHTML = `<span class="img-btn-wrapper" data-img-src="${url}" contenteditable="false"><i class="far fa-image"></i> 查看图片 <i class="fas fa-times-circle img-delete-btn" style="cursor:pointer; margin-left:6px; color:#c0392b; font-size:0.85rem;"></i></span>&nbsp;`;
+        document.execCommand('insertHTML', false, btnHTML);
+        contentEditor.scrollTop = contentEditor.scrollHeight;
+        // 同时保证面板可见
+        addWrapper.scrollIntoView({ behavior: 'smooth', block: 'end' });
       } catch (err) {
-        alert('图片上传失败: ' + err.message);
+        alert('上传失败: ' + err.message);
       } finally {
         insertImageBtn.disabled = false;
         insertImageBtn.innerHTML = '<i class="far fa-image"></i> 插入图片';
@@ -567,52 +591,51 @@
       }
     });
 
-    // ========== 4. 原有 UI 逻辑（几乎不变，仅数据源改为 Supabase） ==========
+    // ---------- UI 渲染 ----------
     function initColorPicker() {
       let html = '';
-      PRESET_COLORS.forEach(color => {
-        html += `<div class="color-option" style="background: ${color};" data-color="${color}"></div>`;
-      });
+      PRESET_COLORS.forEach(c => html += `<div class="color-option" style="background:${c};" data-color="${c}"></div>`);
       colorOptionsDiv.innerHTML = html;
-
-      selectedColorBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        colorOptionsDiv.classList.toggle('show');
-      });
-      colorOptionsDiv.addEventListener('click', (e) => {
-        const option = e.target.closest('.color-option');
-        if (option) {
-          const color = option.dataset.color;
-          currentSelectedColor = color;
-          selectedColorBtn.style.background = color;
+      selectedColorBtn.addEventListener('click', e => { e.stopPropagation(); colorOptionsDiv.classList.toggle('show'); });
+      colorOptionsDiv.addEventListener('click', e => {
+        const opt = e.target.closest('.color-option');
+        if (opt) {
+          currentSelectedColor = opt.dataset.color;
+          selectedColorBtn.style.background = currentSelectedColor;
           colorOptionsDiv.classList.remove('show');
         }
       });
       document.addEventListener('click', () => colorOptionsDiv.classList.remove('show'));
-      selectedColorBtn.style.background = DEFAULT_TAG_COLOR;
-      currentSelectedColor = DEFAULT_TAG_COLOR;
     }
 
-    function formatTag(tag) { return (!tag || tag.trim() === '') ? '未分类' : tag.trim(); }
+    function formatTag(t) { return (!t || t.trim()==='') ? '未分类' : t.trim(); }
     function getAllTags() { return [...new Set(notes.map(n => formatTag(n.tag)))]; }
-    function escapeHtml(text) {
-      if (!text) return '';
+    function escapeHtml(str) {
       const div = document.createElement('div');
-      div.textContent = text;
+      div.textContent = str || '';
       return div.innerHTML;
     }
-    function getFilteredNotes() {
-      return currentTag === '全部' ? notes.slice() : notes.filter(n => formatTag(n.tag) === currentTag);
+    function getFilteredNotes() { return currentTag==='全部' ? notes : notes.filter(n => formatTag(n.tag)===currentTag); }
+
+    // 将富文本中的图片替换为按钮
+    function contentWithImageButtons(htmlContent, showDelete = false) {
+        if (!htmlContent) return '';
+        return htmlContent.replace(/<img[^>]+src="([^"]+)"[^>]*>/g, (match, src) => {
+            const delIcon = showDelete 
+            ? ' <i class="fas fa-times-circle img-delete-btn" style="cursor:pointer; margin-left:6px; color:#c0392b; font-size:0.85rem;"></i>' 
+            : '';
+            return `<span class="img-btn-wrapper" data-img-src="${src}" contenteditable="false"><i class="far fa-image"></i> 查看图片${delIcon}</span>`;
+        });
     }
 
     function renderFilters() {
-      const tags = getAllTags().sort((a,b)=>a.localeCompare(b));
+      const tags = getAllTags().sort((a,b) => a.localeCompare(b));
       let html = `<button class="tag-btn ${currentTag==='全部'?'active':''}" data-tag="全部">全部</button>`;
-      tags.forEach(t => { html += `<button class="tag-btn ${currentTag===t?'active':''}" data-tag="${t}">${t}</button>`; });
+      tags.forEach(t => html += `<button class="tag-btn ${currentTag===t?'active':''}" data-tag="${t}">${t}</button>`);
       tagFilterContainer.innerHTML = html;
-      let options = '';
-      tags.forEach(t => { options += `<option value="${t.replace(/"/g,'&quot;')}">`; });
-      tagDatalist.innerHTML = options;
+      let opts = '';
+      tags.forEach(t => opts += `<option value="${t.replace(/"/g,'&quot;')}">`);
+      tagDatalist.innerHTML = opts;
     }
 
     function renderTOC() {
@@ -643,10 +666,10 @@
       }
       let cards = '';
       filtered.forEach(n => {
-        const safeContent = n.content || '';
+        const processedContent = contentWithImageButtons(n.content, false);
         cards += `<div class="note-card" id="note-${n.id}">
           <div class="note-header"><div class="note-title">${escapeHtml(n.title)}</div><span class="note-tag">${escapeHtml(formatTag(n.tag))}</span></div>
-          <div class="note-content">${safeContent}</div>
+          <div class="note-content">${processedContent}</div>
           <div class="note-actions"><button class="edit-btn" data-edit-id="${n.id}"><i class="far fa-edit"></i>编辑</button><button class="delete-btn" data-delete-id="${n.id}"><i class="far fa-trash-alt"></i>删除</button></div>
         </div>`;
       });
@@ -673,11 +696,12 @@
       editingId = id; editingIdInput.value = id;
       titleInput.value = note.title;
       tagInput.value = note.tag;
-      contentEditor.innerHTML = note.content || '';
+      // 如果旧内容是图片标签，转为按钮显示
+        const processed = contentWithImageButtons(note.content || '', true);
+        contentEditor.innerHTML = processed;
       const tag = formatTag(note.tag);
-      const tagColor = tagColorMap[tag] || DEFAULT_TAG_COLOR;
-      currentSelectedColor = tagColor;
-      selectedColorBtn.style.background = tagColor;
+      currentSelectedColor = tagColorMap[tag] || DEFAULT_TAG_COLOR;
+      selectedColorBtn.style.background = currentSelectedColor;
       toggleText.textContent = `编辑笔记 · ${note.title.substring(0,15)}`;
       saveNoteBtn.innerHTML = '<i class="fas fa-save"></i> 更新';
       editingStatus.style.display = 'inline-flex';
@@ -687,34 +711,60 @@
     }
 
     async function handleFormSubmit(e) {
-      e.preventDefault();
-      const title = titleInput.value;
-      const content = contentEditor.innerHTML;
-      const tag = tagInput.value;
-      const success = await saveNoteToDB(title, tag, content);
-      if (success) {
-        await loadNotes();
-        resetFormState();
-        addWrapper.classList.remove('expanded');
-        if (window.innerWidth <= 640 && tocSidebar.classList.contains('collapsed')) toggleToc();
-      }
+        e.preventDefault();
+
+        // 防止重复点击
+        if (saveNoteBtn.disabled) return;
+        saveNoteBtn.disabled = true;
+        const originalHTML = saveNoteBtn.innerHTML;
+        saveNoteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 保存中...';
+
+        try {
+            const success = await saveNoteToDB(titleInput.value, tagInput.value, contentEditor.innerHTML);
+            if (success) {
+            await loadNotes();
+            resetFormState();
+            addWrapper.classList.remove('expanded');
+            if (window.innerWidth <= 640 && tocSidebar.classList.contains('collapsed')) toggleToc();
+            }
+        } finally {
+            // 无论成功还是失败，都要恢复按钮
+            saveNoteBtn.disabled = false;
+            saveNoteBtn.innerHTML = originalHTML;
+        }
     }
 
     async function handleDelete(id) {
-      if (confirm('删除笔记？')) {
-        await deleteNoteFromDB(id);
-        if (editingId === id) { resetFormState(); addWrapper.classList.remove('expanded'); }
-        if (currentTag !== '全部' && !getAllTags().includes(currentTag)) {
-          currentTag = '全部';
-        }
-        await loadNotes();
-      }
+      if (!confirm('删除笔记？')) return;
+      await deleteNoteWithImages(id);
+      if (editingId === id) { resetFormState(); addWrapper.classList.remove('expanded'); }
+      if (currentTag !== '全部' && !getAllTags().includes(currentTag)) currentTag = '全部';
+      await loadNotes();
     }
+
+    // 图片灯箱
+    function showLightbox(src) {
+      lightboxImage.src = src;
+      lightboxOverlay.classList.add('active');
+    }
+    function hideLightbox() {
+      lightboxOverlay.classList.remove('active');
+      lightboxImage.src = '';
+    }
+    lightboxOverlay.addEventListener('click', hideLightbox);
+    // 点击图片按钮时打开灯箱
+    notesContainer.addEventListener('click', e => {
+      const btn = e.target.closest('.img-btn-wrapper');
+      if (btn) {
+        const src = btn.dataset.imgSrc;
+        if (src) showLightbox(src);
+      }
+    });
 
     // 导出导入
     function exportJson() {
-      const exportData = { notes, tagColorMap };
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const data = { notes, tagColorMap };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = `notes_${new Date().toISOString().slice(0,10)}.json`;
@@ -724,8 +774,8 @@
     function exportCsv() {
       let csv = "标题,标签,内容\n";
       notes.forEach(n => {
-        const plainContent = (n.content || '').replace(/<[^>]*>/g, '').replace(/"/g,'""').replace(/\n/g,' ');
-        csv += `"${n.title.replace(/"/g,'""')}","${formatTag(n.tag).replace(/"/g,'""')}","${plainContent}"\n`;
+        const plain = (n.content||'').replace(/<[^>]*>/g,'').replace(/"/g,'""').replace(/\n/g,' ');
+        csv += `"${n.title.replace(/"/g,'""')}","${formatTag(n.tag).replace(/"/g,'""')}","${plain}"\n`;
       });
       const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement('a');
@@ -735,38 +785,37 @@
     }
 
     function parseCSVLine(line) {
-      const result = []; let current = '', inQuotes = false;
+      const result = []; let cur = '', inQ = false;
       for (let i = 0; i < line.length; i++) {
         const ch = line[i];
-        if (ch === '"' && !inQuotes) inQuotes = true;
-        else if (ch === '"' && inQuotes) {
-          if (i + 1 < line.length && line[i + 1] === '"') { current += '"'; i++; }
-          else inQuotes = false;
-        } else if (ch === ',' && !inQuotes) { result.push(current); current = ''; }
-        else current += ch;
+        if (ch === '"' && !inQ) inQ = true;
+        else if (ch === '"' && inQ) {
+          if (i+1 < line.length && line[i+1] === '"') { cur += '"'; i++; }
+          else inQ = false;
+        } else if (ch === ',' && !inQ) { result.push(cur); cur = ''; }
+        else cur += ch;
       }
-      result.push(current); return result;
+      result.push(cur);
+      return result;
     }
 
-    async function processImported(importedNotes, importedTagColorMap = null) {
+    async function processImported(importedNotes, importedColors = null) {
       if (!currentUser) return;
       const valid = importedNotes.filter(i => i.title && i.content);
       if (!valid.length) { alert('无有效笔记'); return; }
-      const mode = confirm(`导入 ${valid.length} 条笔记。选“确定”合并，选“取消”替换全部。`);
-      if (!mode) {
-        // 替换全部：先删除当前用户所有笔记
-        await supabase.from('notes').delete().eq('user_id', currentUser.id);
+      if (!confirm(`导入 ${valid.length} 条。确定合并，取消替换全部。`)) {
+        await supabaseClient.from('notes').delete().eq('user_id', currentUser.id);
       }
       for (const item of valid) {
-        await supabase.from('notes').insert({
+        await supabaseClient.from('notes').insert({
           user_id: currentUser.id,
           title: item.title,
           content: item.content,
           tag: item.tag || '未分类'
         });
       }
-      if (importedTagColorMap) {
-        for (const [tag, color] of Object.entries(importedTagColorMap)) {
+      if (importedColors) {
+        for (const [tag, color] of Object.entries(importedColors)) {
           await syncTagColor(tag, color);
         }
       }
@@ -781,28 +830,28 @@
       reader.onload = async (e) => {
         try {
           if (ext === 'json') {
-            const imported = JSON.parse(e.target.result);
-            let importedNotes = Array.isArray(imported) ? imported : imported.notes;
-            let importedColors = imported.tagColorMap || null;
+            const json = JSON.parse(e.target.result);
+            let importedNotes = Array.isArray(json) ? json : json.notes;
+            let importedColors = json.tagColorMap || null;
             if (!Array.isArray(importedNotes)) throw new Error('非数组');
             await processImported(importedNotes, importedColors);
           } else {
             const lines = e.target.result.split(/\r?\n/).filter(l => l.trim());
             if (lines.length < 2) { alert('CSV无数据'); return; }
-            const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
-            const titleIdx = headers.findIndex(h => h.includes('标题') || h === 'title');
-            const tagIdx = headers.findIndex(h => h.includes('标签') || h === 'tag');
-            const contentIdx = headers.findIndex(h => h.includes('内容') || h === 'content');
-            if (titleIdx === -1 || contentIdx === -1) { alert('CSV需包含标题和内容列'); return; }
+            const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g,'').trim());
+            const ti = headers.findIndex(h => h.includes('标题') || h==='title');
+            const gi = headers.findIndex(h => h.includes('标签') || h==='tag');
+            const ci = headers.findIndex(h => h.includes('内容') || h==='content');
+            if (ti===-1 || ci===-1) { alert('CSV需包含标题和内容列'); return; }
             const imported = [];
             for (let i = 1; i < lines.length; i++) {
               const row = parseCSVLine(lines[i]);
-              if (row.length <= Math.max(titleIdx, contentIdx)) continue;
-              const title = (row[titleIdx] || '').replace(/^"|"$/g, '').trim();
-              const content = (row[contentIdx] || '').replace(/^"|"$/g, '').trim();
+              if (row.length <= Math.max(ti, ci)) continue;
+              const title = (row[ti]||'').replace(/^"|"$/g,'').trim();
+              const content = (row[ci]||'').replace(/^"|"$/g,'').trim();
               if (!title || !content) continue;
-              let tag = tagIdx >= 0 ? (row[tagIdx] || '').replace(/^"|"$/g, '').trim() : '未分类';
-              imported.push({ title, content, tag: tag || '未分类' });
+              const tag = gi >= 0 ? (row[gi]||'').replace(/^"|"$/g,'').trim() : '未分类';
+              imported.push({ title, content, tag: tag||'未分类' });
             }
             await processImported(imported);
           }
@@ -812,26 +861,17 @@
       reader.readAsText(file, 'UTF-8');
     }
 
-    // 目录折叠
+    // 折叠面板
     addToggle.addEventListener('click', () => addWrapper.classList.toggle('expanded'));
     function toggleToc() {
       tocSidebar.classList.toggle('collapsed');
-      const isCollapsed = tocSidebar.classList.contains('collapsed');
-      tocToggleIcon.className = isCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+      tocToggleIcon.className = tocSidebar.classList.contains('collapsed') ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
     }
     tocToggleBtn.addEventListener('click', toggleToc);
 
-    // 标题保存（仍用 localStorage）
-    const STORAGE_TITLE_KEY = 'moxi_app_title';
-    function loadTitle() {
-      const saved = localStorage.getItem(STORAGE_TITLE_KEY);
-      if (saved) mainTitleEl.textContent = saved;
-    }
-    function saveTitle() {
-      localStorage.setItem(STORAGE_TITLE_KEY, mainTitleEl.textContent.trim() || '墨息 · 标签笔记');
-    }
-    mainTitleEl.addEventListener('blur', saveTitle);
-    mainTitleEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); mainTitleEl.blur(); } });
+    // 标题修改事件（同步到云端）
+    mainTitleEl.addEventListener('blur', saveAppTitle);
+    mainTitleEl.addEventListener('keydown', e => { if (e.key==='Enter'){ e.preventDefault(); mainTitleEl.blur(); } });
 
     // 事件绑定
     addForm.addEventListener('submit', handleFormSubmit);
@@ -846,12 +886,12 @@
       const id = item.dataset.noteId;
       const card = document.getElementById(`note-${id}`);
       if (card) {
-        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        card.scrollIntoView({ behavior:'smooth', block:'start' });
         card.style.backgroundColor = '#f4f7ff';
         setTimeout(() => card.style.backgroundColor = '', 500);
       } else {
         const exists = notes.find(n => n.id === id);
-        if (exists) { currentTag = '全部'; renderAll(); setTimeout(() => document.getElementById(`note-${id}`)?.scrollIntoView({ behavior: 'smooth' }), 60); }
+        if (exists) { currentTag = '全部'; renderAll(); setTimeout(() => document.getElementById(`note-${id}`)?.scrollIntoView({ behavior:'smooth' }), 60); }
       }
       if (window.innerWidth <= 640 && !tocSidebar.classList.contains('collapsed')) toggleToc();
     });
@@ -860,6 +900,25 @@
       const delBtn = e.target.closest('.delete-btn');
       if (editBtn) startEditNote(editBtn.dataset.editId);
       else if (delBtn) handleDelete(delBtn.dataset.deleteId);
+    });
+
+
+   // 编辑器内删除图片按钮
+    contentEditor.addEventListener('click', (e) => {
+    // 如果点的是删除图标
+    if (e.target.classList.contains('img-delete-btn')) {
+        if (confirm('确定要删除这张图片吗？')) {
+        const wrapper = e.target.closest('.img-btn-wrapper');
+        if (wrapper) wrapper.remove();
+        }
+        e.preventDefault();
+    }
+    // 如果点的是“查看图片”按钮的其他部分，打开灯箱
+    const btn = e.target.closest('.img-btn-wrapper');
+    if (btn && !e.target.classList.contains('img-delete-btn')) {
+        const src = btn.dataset.imgSrc;
+        if (src) showLightbox(src);
+    }
     });
     exportJsonBtn.addEventListener('click', exportJson);
     exportCsvBtn.addEventListener('click', exportCsv);
@@ -870,12 +929,7 @@
 
     // 初始化
     initColorPicker();
-    loadTitle();
-
-    // 页面加载完成时检查认证状态
-    window.addEventListener('DOMContentLoaded', () => {
-      refreshAuthUI();
-    });
+    window.addEventListener('DOMContentLoaded', () => refreshAuthUI());
   })();
 </script>
 </body>
