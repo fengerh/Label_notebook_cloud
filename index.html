@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes, viewport-fit=cover">
-  <title>云端标签笔记 v20260506.2210</title>
+  <title>云端标签笔记 v20260506.2340</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -33,10 +33,7 @@
     .icon-btn i { color:#5b6cf7; font-size:1rem; }
     @media(max-width:480px){ .icon-btn span{display:none;} .icon-btn{padding:8px 12px;} }
 
-    .add-note-wrapper { background:#fafbff; border-bottom:1px solid #e9ecf2; }
-    .add-note-toggle { padding:10px 16px; cursor:pointer; display:flex; align-items:center; gap:12px; font-weight:600; color:#2c3e50; user-select:none; }
-    .add-note-toggle i { color:#5b6cf7; font-size:1.2rem; transition:transform 0.2s; }
-    .add-note-toggle .toggle-text { flex:1; font-size:1rem; }
+   
     .add-note-panel { padding:0 16px 16px 16px; display:none; }
     .add-note-wrapper.expanded .add-note-panel { display:block; }
     .add-note-wrapper.expanded .fa-chevron-down { transform:rotate(180deg); }
@@ -77,7 +74,7 @@
     .editor-toolbar { display:flex; gap:8px; margin-bottom:8px; }
     .editor-toolbar button { background:#f1f4f9; border:1px solid #dce2ec; border-radius:20px; padding:6px 14px; font-size:0.85rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
 
-    .filter-section { padding:8px 16px; display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; border-bottom:1px solid #eef1f5; background:white; }
+    
     .tag-filters { display:flex; flex-wrap:wrap; gap:6px; }
     .tag-btn { background:#f1f4f9; border:none; padding:5px 14px; border-radius:40px; font-size:0.8rem; font-weight:500; cursor:pointer; }
     .tag-btn.active { background:#1e293b; color:white; }
@@ -89,11 +86,86 @@
     @media(min-width:641px){ .toc-sidebar{overflow-y:auto;} }
     @media(max-width:640px){ .toc-sidebar{width:100%; border-right:none; border-bottom:1px solid #e9ecf2; max-height:40vh; transition:max-height 0.2s;} .toc-sidebar.collapsed{max-height:52px;} }
 
-    .toc-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#f4f7fc; border-bottom:1px dashed #d7dfe9; }
-    .toc-header-left { display:flex; align-items:center; gap:8px; }
-    .toc-header-left h2 { font-size:1rem; font-weight:600; }
-    .note-count { background:#e6eaff; padding:4px 10px; border-radius:30px; font-size:0.8rem; }
-    .toc-toggle-btn { background:none; border:none; font-size:1.2rem; color:#5b6cf7; cursor:pointer; padding:6px; display:flex; align-items:center; }
+    /* 统一标题栏 */
+     .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #f4f7fc;
+      cursor: pointer;
+      user-select: none;
+    }
+    .section-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+    .section-header-left .header-icon {
+      color: #5b6cf7;
+      font-size: 1.2rem;
+      width: 1.4em;
+      text-align: center;
+    }
+    .section-header-left .header-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    .header-badge {
+      background: #e6eaff;
+      padding: 2px 10px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      color: #334155;
+      margin-left: 6px;
+    }
+    .header-toggle-btn {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      color: #5b6cf7;
+      cursor: pointer;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* 添加笔记面板细节 */
+    .add-note-wrapper {
+      background: #fafbff;
+      border-bottom: 1px solid #e9ecf2;
+    }
+    .add-note-wrapper.expanded .fa-chevron-down {
+      transform: rotate(180deg);
+    }
+
+    /* 筛选面板细节 */
+    .filter-section {
+      padding: 0;
+      border-bottom: 1px solid #eef1f5;
+      background: white;
+    }
+    .filter-controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      padding: 8px 16px 12px 16px;   /* 上下内边距增加 */
+      min-height: 44px;               /* 最小高度，防止重叠 */
+    }
+    .filter-section.collapsed .filter-controls {
+      display: none;
+    }
+    
+
+    /* 目录在桌面端始终显示折叠按钮 */
+    @media (min-width: 641px) {
+      .toc-sidebar .header-toggle-btn {
+        display: flex;
+      }
+    }
     
 
     .toc-list-container { flex:1; overflow-y:auto; padding:8px 12px 12px 12px; }
@@ -274,10 +346,14 @@
   </div>
 
   <div class="add-note-wrapper" id="addNoteWrapper">
-    <div class="add-note-toggle" id="addNoteToggle">
-      <i class="fas fa-plus-circle"></i>
-      <span class="toggle-text" id="toggleText">添加新笔记</span>
-      <i class="fas fa-chevron-down"></i>
+    <div class="section-header add-note-toggle" id="addNoteToggle">
+      <div class="section-header-left">
+        <i class="fas fa-plus-circle header-icon"></i>
+        <span class="header-title toggle-text" id="toggleText">添加新笔记</span>
+      </div>
+      <button class="header-toggle-btn" type="button">
+        <i class="fas fa-chevron-down"></i>
+      </button>
     </div>
     <div class="add-note-panel">
       <form class="add-form" id="addNoteForm">
@@ -318,25 +394,35 @@
     </div>
   </div>
 
-  <div class="filter-section">
-    <span class="filter-label"><i class="fas fa-filter"></i> 筛选</span>
-    <div class="tag-filters" id="tagFilterContainer"></div>
-    <div class="color-filters" id="colorFilterContainer"></div>
-    <div class="search-box">
-      <input type="text" id="searchInput" placeholder="搜索笔记..." autocomplete="off">
-      <button id="clearSearchBtn" class="icon-btn" title="清除搜索"><i class="fas fa-times"></i></button>
+  <div class="filter-section" id="filterSection">
+    <div class="section-header filter-header" id="filterHeader">
+      <div class="section-header-left">
+        <i class="fas fa-filter header-icon"></i>
+        <span class="header-title">筛选</span>
+      </div>
+      <button class="header-toggle-btn">
+        <i class="fas fa-chevron-down" id="filterToggleIcon"></i>
+      </button>
+    </div>
+    <div class="filter-controls" id="filterControls">
+      <div class="tag-filters" id="tagFilterContainer"></div>
+      <div class="color-filters" id="colorFilterContainer"></div>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="搜索笔记..." autocomplete="off">
+        <button id="clearSearchBtn" class="icon-btn" title="清除搜索"><i class="fas fa-times"></i></button>
+      </div>
     </div>
   </div>
 
   <div class="main-layout">
     <div class="toc-sidebar" id="tocSidebar">
-      <div class="toc-header">
-        <div class="toc-header-left">
-          <i class="far fa-list-alt" style="color:#5b6cf7;"></i>
-          <h2>目录</h2>
-          <span class="note-count" id="noteCountDisplay">0</span>
+      <div class="section-header toc-header" id="tocHeader">
+        <div class="section-header-left" id="tocToggleBtn">
+          <i class="far fa-list-alt header-icon"></i>
+          <span class="header-title">目录</span>
+          <span class="header-badge note-count" id="noteCountDisplay">0</span>
         </div>
-        <button class="toc-toggle-btn" id="tocToggleBtn">
+        <button class="header-toggle-btn" type="button">
           <i class="fas fa-chevron-up" id="tocToggleIcon"></i>
         </button>
       </div>
@@ -411,6 +497,10 @@
     const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
     const lightboxOverlay = document.getElementById('lightboxOverlay');
     const lightboxImage = document.getElementById('lightboxImage');
+    const tocHeader = document.getElementById('tocHeader');
+    const filterToggleIcon = document.getElementById('filterToggleIcon');
+    const filterSection = document.getElementById('filterSection');
+    const filterHeader = document.getElementById('filterHeader');
     let currentSelectedColor = DEFAULT_TAG_COLOR;
 
     // ---------- 认证逻辑 ----------
@@ -977,7 +1067,16 @@
       tocSidebar.classList.toggle('collapsed');
       tocToggleIcon.className = tocSidebar.classList.contains('collapsed') ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
     }
-    tocToggleBtn.addEventListener('click', toggleToc);
+    tocHeader.addEventListener('click', toggleToc);
+
+    function toggleFilter() {
+      filterSection.classList.toggle('collapsed');
+      const isCollapsed = filterSection.classList.contains('collapsed');
+      filterToggleIcon.className = isCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+    }
+    //filterToggleBtn.addEventListener('click', toggleFilter);
+    //const filterHeader = document.getElementById('filterHeader');
+    filterHeader.addEventListener('click', toggleFilter);
 
     function autoToggleToc() {
       const isMobile = window.innerWidth <= 640;
@@ -987,6 +1086,17 @@
       } else {
         tocSidebar.classList.remove('collapsed');
         tocToggleIcon.className = 'fas fa-chevron-up';
+      }
+    }
+
+    function autoToggleFilter() {
+      const isMobile = window.innerWidth <= 640;
+      if (isMobile) {
+        filterSection.classList.add('collapsed');
+        filterToggleIcon.className = 'fas fa-chevron-down';
+      } else {
+        filterSection.classList.remove('collapsed');
+        filterToggleIcon.className = 'fas fa-chevron-up';
       }
     }
 
@@ -1075,13 +1185,19 @@
     // 页面加载完成后自动判断
     window.addEventListener('DOMContentLoaded', () => {
       autoToggleToc();
+      autoToggleFilter();
+      if (window.innerWidth <= 640) {
+        addWrapper.classList.remove('expanded');
+      }
       refreshAuthUI();
     });
 
-    // 窗口大小改变时自动判断
-    window.addEventListener('resize', autoToggleToc);
-    // 确保图标和折叠状态一致
-    tocToggleIcon.className = 'fas fa-chevron-down';  
+    // 窗口大小改变时也自动调整
+    window.addEventListener('resize', () => {
+      autoToggleToc();
+      autoToggleFilter();
+    });
+     
   })();
 </script>
 </body>
