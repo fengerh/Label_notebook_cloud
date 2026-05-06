@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes, viewport-fit=cover">
-  <title>云端标签笔记 v20260506.1000</title>
+  <title>云端标签笔记 v20260506.2210</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -95,6 +95,7 @@
     .note-count { background:#e6eaff; padding:4px 10px; border-radius:30px; font-size:0.8rem; }
     .toc-toggle-btn { background:none; border:none; font-size:1.2rem; color:#5b6cf7; cursor:pointer; padding:6px; display:flex; align-items:center; }
     
+
     .toc-list-container { flex:1; overflow-y:auto; padding:8px 12px 12px 12px; }
     .toc-sidebar.collapsed .toc-list-container { display:none; }
     .toc-list { list-style:none; display:flex; flex-direction:column; gap:4px; }
@@ -173,6 +174,64 @@
         color: red !important;
         }
 
+        /* 颜色筛选器 */
+        .color-filters {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          align-items: center;
+        }
+        .color-dot {
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          cursor: pointer;
+          border: 2px solid transparent;
+          transition: transform 0.1s, border-color 0.1s;
+        }
+        .color-dot:hover {
+          transform: scale(1.2);
+        }
+        .color-dot.active {
+          border-color: #1e293b;
+          transform: scale(1.15);
+        }
+
+        /* 搜索框 */
+        .search-box {
+          display: flex;
+          align-items: center;
+          margin-left: auto;
+          gap: 6px;
+        }
+        .search-box input {
+          padding: 6px 12px;
+          border: 1.5px solid #dce2ec;
+          border-radius: 20px;
+          font-size: 0.85rem;
+          width: 140px;
+        }
+        .search-box input:focus {
+          outline: none;
+          border-color: #5b6cf7;
+        }
+        .search-box button {
+          padding: 4px 8px;
+          border: none;
+          background: none;
+          color: #7f8fa3;
+          cursor: pointer;
+        }
+
+
+        @media (max-width: 640px) {
+        .search-box input {
+          width: 100px;
+        }
+        .filter-section {
+          gap: 8px;
+        }
+      }
   </style>
 </head>
 <body>
@@ -200,7 +259,7 @@
   <div class="app-header">
     <div class="title-wrapper">
       <i class="fas fa-pen-fancy"></i>
-      <div class="editable-title" id="mainTitle" contenteditable="true">标签笔记</div>
+      <div class="editable-title" id="mainTitle" contenteditable="true">墨息 · 标签笔记</div>
     </div>
     <div class="user-area">
       <span class="user-email" id="userEmailDisplay"></span>
@@ -262,10 +321,15 @@
   <div class="filter-section">
     <span class="filter-label"><i class="fas fa-filter"></i> 筛选</span>
     <div class="tag-filters" id="tagFilterContainer"></div>
+    <div class="color-filters" id="colorFilterContainer"></div>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="搜索笔记..." autocomplete="off">
+      <button id="clearSearchBtn" class="icon-btn" title="清除搜索"><i class="fas fa-times"></i></button>
+    </div>
   </div>
 
   <div class="main-layout">
-    <div class="toc-sidebar collapsed" id="tocSidebar">
+    <div class="toc-sidebar" id="tocSidebar">
       <div class="toc-header">
         <div class="toc-header-left">
           <i class="far fa-list-alt" style="color:#5b6cf7;"></i>
@@ -301,6 +365,8 @@
     const PRESET_COLORS = ['#e05b6c','#f39c12','#2ecc71','#3498db','#9b59b6','#1abc9c','#e67e22','#95a5a6'];
     const DEFAULT_TAG_COLOR = '#5b6cf7';
     let notes = [], currentTag='全部', editingId=null, tagColorMap={}, currentUser=null;
+    let currentColor = '全部';   // '全部' 或具体颜色值（如 '#e05b6c'）
+    let searchQuery = '';
 
     // DOM 元素
     const authContainer = document.getElementById('authContainer');
@@ -314,7 +380,9 @@
     const tagFilterContainer = document.getElementById('tagFilterContainer');
     const tocContainer = document.getElementById('tocListContainer');
     const notesContainer = document.getElementById('notesContainer');
-
+    const colorFilterContainer = document.getElementById('colorFilterContainer');
+    const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
     const noteCountSpan = document.getElementById('noteCountDisplay');
     const exportJsonBtn = document.getElementById('exportJsonBtn');
     const exportCsvBtn = document.getElementById('exportCsvBtn');
@@ -614,7 +682,36 @@
       div.textContent = str || '';
       return div.innerHTML;
     }
-    function getFilteredNotes() { return currentTag==='全部' ? notes : notes.filter(n => formatTag(n.tag)===currentTag); }
+
+    function getFilteredNotes() {
+      let result = notes.slice();
+
+      // 1. 标签筛选
+      if (currentTag !== '全部') {
+        result = result.filter(n => formatTag(n.tag) === currentTag);
+      }
+
+      // 2. 颜色筛选（找到所有属于该颜色的标签，再筛选笔记）
+      if (currentColor !== '全部') {
+        // 找出 tagColorMap 中颜色等于 currentColor 的标签名
+        const tagsWithColor = Object.keys(tagColorMap).filter(tag => tagColorMap[tag] === currentColor);
+        result = result.filter(n => tagsWithColor.includes(formatTag(n.tag)));
+      }
+
+      // 3. 搜索过滤（标题、标签、内容纯文本）
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        result = result.filter(n => {
+          const title = (n.title || '').toLowerCase();
+          const tag = formatTag(n.tag).toLowerCase();
+          const plainContent = (n.content || '').replace(/<[^>]*>/g, '').toLowerCase();
+          return title.includes(q) || tag.includes(q) || plainContent.includes(q);
+        });
+      }
+
+      return result;
+    }
+
 
     // 将富文本中的图片替换为按钮
     function contentWithImageButtons(htmlContent, showDelete = false) {
@@ -628,12 +725,26 @@
     }
 
     function renderFilters() {
+      // --- 标签按钮 ---
       const tags = getAllTags().sort((a,b) => a.localeCompare(b));
       let html = `<button class="tag-btn ${currentTag==='全部'?'active':''}" data-tag="全部">全部</button>`;
-      tags.forEach(t => html += `<button class="tag-btn ${currentTag===t?'active':''}" data-tag="${t}">${t}</button>`);
+      tags.forEach(t => {
+        html += `<button class="tag-btn ${currentTag===t?'active':''}" data-tag="${t}">${t}</button>`;
+      });
       tagFilterContainer.innerHTML = html;
+
+      // --- 颜色点 ---
+      // 收集所有已被使用的颜色（从 tagColorMap 中提取）
+      const usedColors = new Set(Object.values(tagColorMap));
+      let colorDotsHtml = `<span class="color-dot ${currentColor==='全部'?'active':''}" data-color="全部" style="background:conic-gradient(#ccc 0deg 360deg); border:2px solid #aaa;" title="全部颜色"></span>`;
+      usedColors.forEach(color => {
+        colorDotsHtml += `<span class="color-dot ${currentColor===color?'active':''}" data-color="${color}" style="background:${color};" title="筛选此颜色标签"></span>`;
+      });
+      colorFilterContainer.innerHTML = colorDotsHtml;
+
+      // --- 更新 datalist ---
       let opts = '';
-      tags.forEach(t => opts += `<option value="${t.replace(/"/g,'&quot;')}">`);
+      tags.forEach(t => { opts += `<option value="${t.replace(/"/g,'&quot;')}">`; });
       tagDatalist.innerHTML = opts;
     }
 
@@ -868,6 +979,17 @@
     }
     tocToggleBtn.addEventListener('click', toggleToc);
 
+    function autoToggleToc() {
+      const isMobile = window.innerWidth <= 640;
+      if (isMobile) {
+        tocSidebar.classList.add('collapsed');
+        tocToggleIcon.className = 'fas fa-chevron-down';
+      } else {
+        tocSidebar.classList.remove('collapsed');
+        tocToggleIcon.className = 'fas fa-chevron-up';
+      }
+    }
+
     // 标题修改事件（同步到云端）
     mainTitleEl.addEventListener('blur', saveAppTitle);
     mainTitleEl.addEventListener('keydown', e => { if (e.key==='Enter'){ e.preventDefault(); mainTitleEl.blur(); } });
@@ -878,6 +1000,28 @@
     tagFilterContainer.addEventListener('click', e => {
       const btn = e.target.closest('.tag-btn');
       if (btn) { currentTag = btn.dataset.tag; renderAll(); }
+    });
+    colorFilterContainer.addEventListener('click', e => {
+      const dot = e.target.closest('.color-dot');
+      if (!dot) return;
+      currentColor = dot.dataset.color;  // '全部' 或颜色值
+      // 如果选了颜色，自动取消标签筛选（避免矛盾），但不是必须，可按你喜好
+      // currentTag = '全部'; // 可选，取消注释则选择颜色时会重置标签
+      renderFilters();
+      renderTOC();
+      renderNotes();
+    });
+    searchInput.addEventListener('input', () => {
+      searchQuery = searchInput.value;
+      renderTOC();
+      renderNotes();
+    });
+
+    clearSearchBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      searchQuery = '';
+      renderTOC();
+      renderNotes();
     });
     tocContainer.addEventListener('click', e => {
       const item = e.target.closest('.toc-item');
@@ -928,9 +1072,16 @@
 
     // 初始化
     initColorPicker();
+    // 页面加载完成后自动判断
+    window.addEventListener('DOMContentLoaded', () => {
+      autoToggleToc();
+      refreshAuthUI();
+    });
+
+    // 窗口大小改变时自动判断
+    window.addEventListener('resize', autoToggleToc);
     // 确保图标和折叠状态一致
-    tocToggleIcon.className = 'fas fa-chevron-down';
-    window.addEventListener('DOMContentLoaded', () => refreshAuthUI());
+    tocToggleIcon.className = 'fas fa-chevron-down';  
   })();
 </script>
 </body>
