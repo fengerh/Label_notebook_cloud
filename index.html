@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes, viewport-fit=cover">
-  <title>云端标签笔记 v20260507.1720</title>
+  <title>云端标签笔记 v20260507.2040</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -393,6 +393,7 @@
     const SUPABASE_URL = 'https://vcqkcfqajjtvoyotevdc.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
 
+
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const PRESET_COLORS = ['#e05b6c','#f39c12','#2ecc71','#3498db','#9b59b6','#1abc9c','#e67e22','#95a5a6'];
@@ -511,23 +512,28 @@
     // 数据操作
     async function loadNotes() {
       if(!currentUser) return;
-      const { data, error } = await supabaseClient.from('notes').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false});
+      const { data, error } = await supabaseClient
+        .from('notes')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at',{ascending:false});
       if(error){ console.error(error); return; }
       notes = data || [];
-      const { data: colorRows } = await supabaseClient.from('user_tag_colors').select('*').eq('user_id', currentUser.id);
+      // 彻底不再使用 tagColorMap，而是直接在渲染时根据标签名称计算颜色，保持颜色选择的即时性和一致性
       tagColorMap = {};
-      (colorRows||[]).forEach(row => { tagColorMap[row.tag] = row.color; });
+      //(colorRows||[]).forEach(row => { tagColorMap[row.tag] = row.color; });
       renderAll();
     }
 
-    async function syncTagColor(tag, color) {
-      if(!currentUser || tag==='未分类') return;
-      await supabaseClient.from('user_tag_colors').upsert({ user_id:currentUser.id, tag, color }, { onConflict:'user_id,tag' });
-    }
+    //async function syncTagColor(tag, color) {
+    //  if(!currentUser || tag==='未分类') return;
+    //  await supabaseClient.from('user_tag_colors').upsert({ user_id:currentUser.id, tag, color }, { onConflict:'user_id,tag' });
+    //}
 
     async function saveNoteToDB(title, tag, content) {
       if(!title.trim() || !content.trim()) return false;
-      const noteData = { user_id: currentUser.id, title: title.trim(), content: content.trim(), tag: tag.trim() || '未分类', updated_at: new Date().toISOString() };
+      const noteData = { user_id: currentUser.id, title: title.trim(), content: content.trim(), tag: tag.trim() || '未分类', color: currentSelectedColor,          // 保存笔记自身的颜色
+      updated_at: new Date().toISOString() };
       if(editingId) {
         const oldNote = notes.find(n => n.id === editingId);
         if(oldNote) {
@@ -545,7 +551,7 @@
         const { error } = await supabaseClient.from('notes').insert(noteData);
         if(error){ alert('创建失败'); return false; }
       }
-      await syncTagColor(formatTag(noteData.tag), currentSelectedColor);
+      //await syncTagColor(formatTag(noteData.tag), currentSelectedColor); // 不再同步标签颜色
       return true;
     }
 
@@ -658,7 +664,7 @@
         tagInput.value = val;
         // const color = tagColorMap[val] || DEFAULT_TAG_COLOR;
         // currentSelectedColor = color;
-        selectedColorBtn.style.background = color;
+        // selectedColorBtn.style.background = color;
       } else {
         // 选择了空白项，清空输入框并重置颜色
         tagInput.value = '';
@@ -692,10 +698,12 @@
     function getFilteredNotes() {
       let result = notes.slice();
       if(currentTag !== '全部') result = result.filter(n => formatTag(n.tag) === currentTag);
+
+      // 颜色筛选：直接看笔记的 color 字段
       if(currentColor !== '全部') {
-        const tagsWithColor = Object.keys(tagColorMap).filter(tag => tagColorMap[tag] === currentColor);
-        result = result.filter(n => tagsWithColor.includes(formatTag(n.tag)));
+        result = result.filter(n => n.color === currentColor);
       }
+
       if(searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
         result = result.filter(n => {
@@ -722,12 +730,15 @@
       tags.forEach(t => html += `<button class="tag-btn ${currentTag===t?'active':''}" data-tag="${t}">${t}</button>`);
       tagFilterContainer.innerHTML = html;
 
-      const usedColors = new Set(Object.values(tagColorMap));
+      // 颜色点基于笔记自身的颜色字段
+      const usedColors = [...new Set(notes.map(n => n.color || DEFAULT_TAG_COLOR))];
       let colorDotsHtml = `<span class="color-dot ${currentColor==='全部'?'active':''}" data-color="全部" style="background:conic-gradient(#ccc 0deg 360deg); border:2px solid #aaa;" title="全部颜色"></span>`;
       usedColors.forEach(color => {
         colorDotsHtml += `<span class="color-dot ${currentColor===color?'active':''}" data-color="${color}" style="background:${color};" title="筛选此颜色标签"></span>`;
       });
       colorFilterContainer.innerHTML = colorDotsHtml;
+
+      // 不需要再更新 datalist
     }
 
     function renderTOC() {
@@ -736,8 +747,7 @@
       if(!filtered.length) { tocContainer.innerHTML = '<div class="empty-msg">暂无笔记</div>'; return; }
       let items = '';
       filtered.forEach(n => {
-        const tag = formatTag(n.tag);
-        const dotColor = tagColorMap[tag] || DEFAULT_TAG_COLOR;
+        const dotColor = n.color || DEFAULT_TAG_COLOR;   // 笔记自己的颜色
         items += `<li class="toc-item" data-note-id="${n.id}">
           <span class="toc-tag-dot" style="background:${dotColor};"></span>
           <span class="toc-title">${escapeHtml(n.title)||'无标题'}</span>
@@ -789,8 +799,8 @@
       saveNoteBtn.innerHTML = '<i class="fas fa-check"></i> 保存';
       editingStatus.style.display = 'none';
       cancelEditBtn.style.display = 'none';
-      currentSelectedColor = DEFAULT_TAG_COLOR;
-      selectedColorBtn.style.background = DEFAULT_TAG_COLOR;
+      //currentSelectedColor = DEFAULT_TAG_COLOR;
+      //selectedColorBtn.style.background = DEFAULT_TAG_COLOR;
       tagSelect.value = '';
     }
 
@@ -799,9 +809,11 @@
       editingId = id; editingIdInput.value = id;
       titleInput.value = note.title; tagInput.value = note.tag;
       contentEditor.innerHTML = contentWithImageButtons(note.content||'', true);
-      const tag = formatTag(note.tag);
-      currentSelectedColor = tagColorMap[tag] || DEFAULT_TAG_COLOR;
+      //const tag = formatTag(note.tag);
+      // 用笔记自身保存的颜色
+      currentSelectedColor = note.color || DEFAULT_TAG_COLOR;
       selectedColorBtn.style.background = currentSelectedColor;
+
       toggleText.textContent = `编辑笔记 · ${note.title.substring(0,15)}`;
       saveNoteBtn.innerHTML = '<i class="fas fa-save"></i> 更新';
       editingStatus.style.display = 'inline-flex'; cancelEditBtn.style.display = 'inline-flex';
