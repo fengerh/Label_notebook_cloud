@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes, viewport-fit=cover">
-  <title>云端标签笔记 v20260506.2340</title>
+  <title>云端标签笔记 v20260507.0950</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -29,6 +29,38 @@
     .editable-title { font-size:1.4rem; font-weight:650; color:#1e293b; border:2px solid transparent; border-radius:16px; padding:4px 10px; background:transparent; outline:none; line-height:1.3; max-width:100%; }
     .editable-title:hover, .editable-title:focus { border-color:#5b6cf7; background:white; }
     .toolbar-actions { display:flex; gap:4px; margin-left:auto; }
+    /* 工具栏折叠包裹 */
+    /* 工具栏包裹 */
+    .toolbar-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* 桌面端：隐藏折叠按钮，直接显示操作按钮 */
+    .toolbar-toggle {
+      display: none;
+    }
+    .toolbar-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    /* 手机端：显示折叠按钮，默认隐藏操作按钮 */
+    @media (max-width: 640px) {
+      .toolbar-toggle {
+        display: inline-flex;
+      }
+      .toolbar-actions {
+        display: none;
+      }
+      .toolbar-wrapper.expanded .toolbar-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+    }
+    
     .icon-btn { background:white; border:1.5px solid #e2e8f0; border-radius:40px; padding:8px 12px; font-size:0.85rem; font-weight:500; color:#334155; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
     .icon-btn i { color:#5b6cf7; font-size:1rem; }
     @media(max-width:480px){ .icon-btn span{display:none;} .icon-btn{padding:8px 12px;} }
@@ -297,13 +329,55 @@
 
 
         @media (max-width: 640px) {
-        .search-box input {
-          width: 100px;
+          .search-box input {
+            width: 100px;
+          }
+          .filter-section {
+            gap: 8px;
+          }
+        
+          /* 头部整体收窄 */
+          .app-header {
+            padding: 8px 12px 4px 12px;
+          }
+
+          /* 大标题缩小一点 */
+          .editable-title {
+            font-size: 1.2rem;
+          }
+
+          /* 右上角图标按钮变小 */
+          .icon-btn {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+          }
+          .icon-btn i {
+            font-size: 0.9rem;
+          }
+
+          /* 三个折叠标题栏更矮 */
+          .section-header {
+            padding: 6px 12px;
+          }
+          .section-header-left .header-title {
+            font-size: 0.9rem;
+          }
+          .header-toggle-btn {
+            font-size: 1rem;
+            padding: 4px;
+          }
+
+          /* 筛选控制区不要太宽 */
+          .filter-controls {
+            padding: 4px 12px 8px 12px;
+          }
+
+          /* 用户邮箱字体也小一些 */
+          .user-email {
+            font-size: 0.75rem;
+          }
         }
-        .filter-section {
-          gap: 8px;
-        }
-      }
+      
   </style>
 </head>
 <body>
@@ -331,17 +405,22 @@
   <div class="app-header">
     <div class="title-wrapper">
       <i class="fas fa-pen-fancy"></i>
-      <div class="editable-title" id="mainTitle" contenteditable="true">墨息 · 标签笔记</div>
+      <div class="editable-title" id="mainTitle" contenteditable="true">标签笔记</div>
     </div>
     <div class="user-area">
       <span class="user-email" id="userEmailDisplay"></span>
       <button class="icon-btn" id="logoutBtn" title="退出登录"><i class="fas fa-sign-out-alt"></i></button>
     </div>
-    <div class="toolbar-actions">
-      <button class="icon-btn" id="exportJsonBtn"><i class="fas fa-file-code"></i><span>JSON</span></button>
-      <button class="icon-btn" id="exportCsvBtn"><i class="fas fa-file-csv"></i><span>CSV</span></button>
-      <button class="icon-btn" id="importBtn"><i class="fas fa-upload"></i><span>导入</span></button>
-      <input type="file" id="importFileInput" accept=".json,.csv" class="hidden-file-input">
+    <div class="toolbar-wrapper" id="toolbarWrapper">
+      <button class="icon-btn toolbar-toggle" id="toolbarToggle" title="导入导出" type="button">
+        <i class="fas fa-ellipsis-h"></i>
+      </button>
+      <div class="toolbar-actions" id="toolbarActions">
+        <button class="icon-btn" id="exportJsonBtn"><i class="fas fa-file-code"></i><span>JSON</span></button>
+        <button class="icon-btn" id="exportCsvBtn"><i class="fas fa-file-csv"></i><span>CSV</span></button>
+        <button class="icon-btn" id="importBtn"><i class="fas fa-upload"></i><span>导入</span></button>
+        <input type="file" id="importFileInput" accept=".json,.csv" class="hidden-file-input">
+      </div>
     </div>
   </div>
 
@@ -501,6 +580,9 @@
     const filterToggleIcon = document.getElementById('filterToggleIcon');
     const filterSection = document.getElementById('filterSection');
     const filterHeader = document.getElementById('filterHeader');
+    const toolbarWrapper = document.getElementById('toolbarWrapper');
+    const toolbarToggle = document.getElementById('toolbarToggle');
+
     let currentSelectedColor = DEFAULT_TAG_COLOR;
 
     // ---------- 认证逻辑 ----------
@@ -1069,6 +1151,12 @@
     }
     tocHeader.addEventListener('click', toggleToc);
 
+    // 工具栏切换展开/折叠
+    toolbarToggle.addEventListener('click', (e) => {
+      e.stopPropagation(); // 防止冒泡到外层
+      toolbarWrapper.classList.toggle('expanded');
+    });
+
     function toggleFilter() {
       filterSection.classList.toggle('collapsed');
       const isCollapsed = filterSection.classList.contains('collapsed');
@@ -1097,6 +1185,17 @@
       } else {
         filterSection.classList.remove('collapsed');
         filterToggleIcon.className = 'fas fa-chevron-up';
+      }
+    }
+
+    function autoToggleToolbar() {
+      const isMobile = window.innerWidth <= 640;
+      if (isMobile) {
+        // 手机端默认折叠
+        toolbarWrapper.classList.remove('expanded');
+      } else {
+        // 桌面端始终展开（移除 expanded 类也没关系，因为 CSS 会让它一直显示）
+        toolbarWrapper.classList.remove('expanded');
       }
     }
 
@@ -1186,6 +1285,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       autoToggleToc();
       autoToggleFilter();
+      autoToggleToolbar();   // 新增
       if (window.innerWidth <= 640) {
         addWrapper.classList.remove('expanded');
       }
@@ -1196,9 +1296,9 @@
     window.addEventListener('resize', () => {
       autoToggleToc();
       autoToggleFilter();
+      autoToggleToolbar();   // 新增
     });
-     
-  })();
+})();
 </script>
 </body>
 </html>
