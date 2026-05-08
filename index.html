@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes, viewport-fit=cover">
-  <title>云端标签笔记 v20260508.1620</title>
+  <title>云端标签笔记 v20260508.1630</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -1401,11 +1401,22 @@ const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
 
     // 保留清除按钮功能
     clearSearchBtn.addEventListener('click', () => {
+      // 清空搜索框
       searchInput.value = '';
       searchQuery = '';
-      renderTOC();
-      renderNotes();
+      
+      // 重置标签筛选到"全部"
+      currentTag = '全部';
+      
+      // 重置颜色筛选到"全部"
+      currentColor = '全部';
+      
+      // 重新渲染所有部分
+      renderAll();
     });
+    //   renderTOC();
+    //   renderNotes();
+    // });
 
     clearSearchBtn.addEventListener('click', () => { searchInput.value=''; searchQuery=''; renderTOC(); renderNotes(); });
     searchInput.addEventListener('touchstart', (e) => {
