@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes, viewport-fit=cover">
-  <title>云端标签笔记 v20260508.1020</title>
+  <title>云端标签笔记 v20260508.1040</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -413,8 +413,12 @@
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const PRESET_COLORS = ['#e05b6c','#f39c12','#2ecc71','#3498db','#9b59b6','#1abc9c','#e67e22','#95a5a6'];
-    const DEFAULT_TAG_COLOR = '#5b6cf7';
+    const PRESET_COLORS = [
+      '#e05b6c', '#f39c12', '#f1c40f', '#e67e22',   // 红 / 橙 / 黄
+      '#2ecc71', '#1abc9c', '#3498db', '#9b59b6',   // 绿 / 青 / 蓝 / 紫
+      '#95a5a6', '#7f8c8d', '#34495e', '#5b6cf7'    // 灰 / 深灰 / 蓝灰 / 默认
+    ];
+const DEFAULT_TAG_COLOR = '#5b6cf7';
     let notes = [], currentTag='全部', editingId=null, tagColorMap={}, currentUser=null;
     let currentColor = '全部', searchQuery = '';
 
@@ -711,9 +715,12 @@
 
     // UI 渲染
     function initColorPicker() {
+      // 把默认色加入临时列表，并去重（保证默认色一定在列表中）
+      const colors = [...new Set([...PRESET_COLORS, DEFAULT_TAG_COLOR])];
       let html = '';
-      PRESET_COLORS.forEach(c => html += `<div class="color-option" style="background:${c};" data-color="${c}"></div>`);
+      colors.forEach(c => html += `<div class="color-option" style="background:${c};" data-color="${c}"></div>`);
       colorOptionsDiv.innerHTML = html;
+
       selectedColorBtn.addEventListener('click', e => { e.stopPropagation(); colorOptionsDiv.classList.toggle('show'); });
       colorOptionsDiv.addEventListener('click', e => {
         const opt = e.target.closest('.color-option');
@@ -764,13 +771,28 @@
       tags.forEach(t => html += `<button class="tag-btn ${currentTag===t?'active':''}" data-tag="${t}">${t}</button>`);
       tagFilterContainer.innerHTML = html;
 
-      // 颜色点基于笔记自身的颜色字段
-      const usedColors = [...new Set(notes.map(n => n.color || DEFAULT_TAG_COLOR))];
-      let colorDotsHtml = `<span class="color-dot ${currentColor==='全部'?'active':''}" data-color="全部" style="background:conic-gradient(#ccc 0deg 360deg); border:2px solid #aaa;" title="全部颜色"></span>`;
-      usedColors.forEach(color => {
+    //  收集当前所有笔记实际使用的颜色（含默认值）
+    const usedColorSet = new Set(notes.map(n => n.color || DEFAULT_TAG_COLOR));
+
+    // 先添加“全部”按钮
+    let colorDotsHtml = `<span class="color-dot ${currentColor==='全部'?'active':''}" data-color="全部" style="background:conic-gradient(#e05b6c, #f39c12, #f1c40f, #2ecc71, #3498db, #9b59b6, #95a5a6); border:2px solid #999;" title="全部颜色"></span>`;
+    
+    // 将预设颜色（包含默认色）按顺序取出，只要它正被某条笔记使用，就显示
+    const orderedColors = [...new Set([...PRESET_COLORS, DEFAULT_TAG_COLOR])];  // 预设顺序去重
+    orderedColors.forEach(color => {
+      if (usedColorSet.has(color)) {
         colorDotsHtml += `<span class="color-dot ${currentColor===color?'active':''}" data-color="${color}" style="background:${color};" title="筛选此颜色标签"></span>`;
-      });
-      colorFilterContainer.innerHTML = colorDotsHtml;
+      }
+    });
+
+    // 以防万一，如果存在使用中但不在预设里的颜色，追加到最后
+    usedColorSet.forEach(color => {
+      if (!orderedColors.includes(color)) {
+        colorDotsHtml += `<span class="color-dot ${currentColor===color?'active':''}" data-color="${color}" style="background:${color};" title="筛选此颜色标签"></span>`;
+      }
+    });
+
+    colorFilterContainer.innerHTML = colorDotsHtml;
 
       // 不需要再更新 datalist
     }
