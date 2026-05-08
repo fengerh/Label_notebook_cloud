@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes, viewport-fit=cover">
-  <title>云端标签笔记 v20260508.1310</title>
+  <title>云端标签笔记 v20260508.1500</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -130,6 +130,15 @@
     }
     #noteContentEditor img { width:160px; height:auto; max-width:100%; border-radius:10px; margin:6px 0; cursor:default; display:block; }
 
+    #noteContentEditor ul,
+    #noteContentEditor ol {
+      padding-left: 2em;       /* 左边留出缩进 */
+      margin: 0.5em 0;
+    }
+    #noteContentEditor li {
+      margin: 0.2em 0;
+    }
+
     .btn { padding:10px 20px; border-radius:40px; font-weight:600; border:1.5px solid #d0d9e8; background:white; cursor:pointer; font-size:0.95rem; }
     .btn-primary { background:#5b6cf7; border-color:#5b6cf7; color:white; }
     .btn-secondary { background:white; border-color:#d0d9e8; color:#334155; }
@@ -218,7 +227,7 @@
     .editing-indicator { background:#eef2ff; color:#4355e8; padding:4px 12px; border-radius:20px; font-size:0.8rem; margin-right:auto; }
 
     @media (max-width: 640px) {
-      .search-box input { width:100px; }
+      .search-box input { width:150px; }
       .section-header { padding: 6px 12px; }
       .section-header-left .header-title { font-size: 1rem; }
       .header-toggle-btn { font-size: 1rem; padding: 4px; }
@@ -279,6 +288,24 @@
       }
     }
 
+    /* 防止安卓点击搜索框时页面缩放 */
+    @media (max-width: 640px) {
+      .search-box input {
+        font-size: 16px; /* 安卓上16px以上的字体不会自动缩放 */
+      }
+    }
+
+    /* 安卓设备特殊样式 */
+    @media (max-width: 640px) and (-webkit-touch-callout: none) {
+      .search-box input {
+        font-size: 16px !important; /* 防止安卓缩放 */
+        pointer-events: auto !important; /* 确保可交互 */
+      }
+      
+      .filter-controls {
+        touch-action: none; /* 防止触摸滚动干扰 */
+      }
+    }
   </style>
 </head>
 <body>
@@ -394,7 +421,7 @@
       <div class="tag-filters" id="tagFilterContainer"></div>
       <div class="color-filters" id="colorFilterContainer"></div>
       <div class="search-box">
-        <input type="text" id="searchInput" placeholder="搜索笔记..." autocomplete="off">
+        <input type="text" id="searchInput" placeholder="按回车搜索..." autocomplete="off">
         <button id="clearSearchBtn" class="icon-btn" title="清除搜索"><i class="fas fa-times"></i></button>
       </div>
     </div>
@@ -423,8 +450,9 @@
     "use strict";
 
     // 替换为你的 Supabase 信息
-    const SUPABASE_URL = 'https://vcqkcfqajjtvoyotevdc.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
+const SUPABASE_URL = 'https://vcqkcfqajjtvoyotevdc.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
+
 
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -434,9 +462,11 @@
       '#2ecc71', '#1abc9c', '#3498db', '#9b59b6',   // 绿 / 青 / 蓝 / 紫
       '#95a5a6', '#7f8c8d', '#34495e', '#5b6cf7'    // 灰 / 深灰 / 蓝灰 / 默认
     ];
-const DEFAULT_TAG_COLOR = '#5b6cf7';
+    const DEFAULT_TAG_COLOR = '#5b6cf7';
+
     let notes = [], currentTag='全部', editingId=null, tagColorMap={}, currentUser=null;
     let currentColor = '全部', searchQuery = '';
+    let allowToggle = true; // 控制是否允许折叠筛选面板
 
     const authContainer = document.getElementById('authContainer');
     const appContainer = document.getElementById('appContainer');
@@ -492,6 +522,9 @@ const DEFAULT_TAG_COLOR = '#5b6cf7';
     const updatePasswordBtn = document.getElementById('updatePasswordBtn');
     const cancelRecoveryBtn = document.getElementById('cancelRecoveryBtn');
     const recoveryMessage = document.getElementById('recoveryMessage');
+    
+    // 在文件顶部添加安卓检测
+    const isAndroid = /Android/.test(navigator.userAgent);
 
     let currentSelectedColor = DEFAULT_TAG_COLOR;
 
@@ -1131,12 +1164,115 @@ const DEFAULT_TAG_COLOR = '#5b6cf7';
     }
     tocHeader.addEventListener('click', toggleToc);
 
-    function toggleFilter() {
+
+    // 修改 toggleFilter 函数
+    function toggleFilter(e) {
+      // 安卓设备特殊处理
+      if (isAndroid) {
+        // 检查触摸位置是否在筛选控件内
+        if (e && e.type === 'touchstart') {
+          const touch = e.touches[0];
+          const filterControls = document.getElementById('filterControls');
+          const rect = filterControls.getBoundingClientRect();
+          
+          // 如果触摸点在筛选控件区域内，不折叠
+          if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+              touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+            return;
+          }
+        }
+      }
+      // 原有的切换逻辑
       filterSection.classList.toggle('collapsed');
       const isCollapsed = filterSection.classList.contains('collapsed');
       filterToggleIcon.className = isCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
     }
-    filterHeader.addEventListener('click', toggleFilter);
+
+
+    // function toggleFilter() {
+    //   // 如果禁止折叠，直接返回
+    //   if (!allowToggle) return;
+      
+    //   // 如果当前激活的元素（比如搜索框）在筛选控件内，不折叠
+    //   if (document.activeElement && document.activeElement.closest('#filterControls')) {
+    //     return;
+    //   }
+    //   // 原有的切换逻辑
+    //   filterSection.classList.toggle('collapsed');
+    //   const isCollapsed = filterSection.classList.contains('collapsed');
+    //   filterToggleIcon.className = isCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+    // }
+
+    // ① 只有点击筛选栏左侧的“筛选”文字区域才折叠
+    // ② 只有点击筛选栏右侧的折叠箭头才折叠
+    const filterHeaderLeft = document.querySelector('#filterHeader .section-header-left');
+    const filterToggleBtn = document.querySelector('#filterHeader .header-toggle-btn');
+    
+    // 添加新的事件监听
+    filterHeaderLeft.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFilter(e);
+    });
+
+    filterToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFilter(e);
+    });
+
+    // 安卓设备特殊处理：完全阻止筛选控件区域的触摸事件冒泡
+    if (isAndroid) {
+      const filterControls = document.getElementById('filterControls');
+      
+      // 使用捕获阶段阻止事件
+      filterControls.addEventListener('touchstart', (e) => {
+        e.stopPropagation();
+      }, { capture: true });
+      
+      filterControls.addEventListener('touchend', (e) => {
+        e.stopPropagation();
+      }, { capture: true });
+      
+      // 特别处理搜索框
+      const searchInput = document.getElementById('searchInput');
+      searchInput.addEventListener('touchstart', (e) => {
+        e.stopPropagation();
+        e.preventDefault(); // 防止默认行为
+      }, { capture: true });
+      
+      searchInput.addEventListener('focus', () => {
+        // 聚焦时确保不折叠
+        setTimeout(() => {
+          filterSection.classList.remove('collapsed');
+        }, 10);
+      });
+    }
+
+
+    // ③ 禁止标题栏其余空白区域（包括搜索框上方）触发折叠
+    // 这一步通过不绑定事件实现，因此无需额外代码
+
+    // 确保你的 filterControls 变量已存在
+    const filterControls = document.getElementById('filterControls');
+
+    // 完全阻止筛选控件内的任何事件冒泡到标题栏
+    const blockPropagation = (e) => {
+      e.stopPropagation();
+    };
+
+    // 针对触摸、指针、点击三管齐下
+    filterControls.addEventListener('touchstart', blockPropagation, { passive: false });
+    filterControls.addEventListener('pointerdown', blockPropagation);
+    filterControls.addEventListener('click', blockPropagation);
+
+
+    // 阻止触摸事件冒泡到父级，防止安卓误折叠
+    filterControls.addEventListener('touchstart', (e) => {
+      e.stopPropagation();
+    }, { passive: false });
+
+    filterControls.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+    });
 
     function autoToggleToc() {
       const isMobile = window.innerWidth <= 640;
@@ -1148,11 +1284,16 @@ const DEFAULT_TAG_COLOR = '#5b6cf7';
         tocToggleIcon.className = 'fas fa-chevron-up';
       }
     }
+    // 修改 autoToggleFilter 函数
     function autoToggleFilter() {
       const isMobile = window.innerWidth <= 640;
-      if(isMobile) {
+      if (isMobile && !isAndroid) { // 安卓设备不自动折叠
         filterSection.classList.add('collapsed');
         filterToggleIcon.className = 'fas fa-chevron-down';
+      } else if (isMobile && isAndroid) {
+        // 安卓设备始终展开
+        filterSection.classList.remove('collapsed');
+        filterToggleIcon.className = 'fas fa-chevron-up';
       } else {
         filterSection.classList.add('collapsed');
         filterToggleIcon.className = 'fas fa-chevron-down';
@@ -1199,8 +1340,48 @@ const DEFAULT_TAG_COLOR = '#5b6cf7';
       currentColor = dot.dataset.color;
       renderFilters(); renderTOC(); renderNotes();
     });
-    searchInput.addEventListener('input', () => { searchQuery = searchInput.value; renderTOC(); renderNotes(); });
+
+    // 移除原来的实时搜索
+    // searchInput.addEventListener('input', () => { searchQuery = searchInput.value; renderTOC(); renderNotes(); });
+
+    // 改为只在回车时执行搜索
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        searchQuery = searchInput.value;
+        renderTOC();
+        renderNotes();
+        // 可选：让搜索框失去焦点，避免软键盘遮挡
+        // 安卓设备上，搜索后让输入框失去焦点
+        if (isAndroid) {
+          searchInput.blur();
+        } 
+      }
+    });
+
+    // 保留清除按钮功能
+    clearSearchBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      searchQuery = '';
+      renderTOC();
+      renderNotes();
+    });
+
     clearSearchBtn.addEventListener('click', () => { searchInput.value=''; searchQuery=''; renderTOC(); renderNotes(); });
+    searchInput.addEventListener('touchstart', (e) => {
+      e.stopPropagation();
+    });
+    clearSearchBtn.addEventListener('touchstart', (e) => {
+      e.stopPropagation();
+    });
+
+    searchInput.addEventListener('focus', () => {
+      allowToggle = false; // 获得焦点时禁止折叠
+    });
+
+    searchInput.addEventListener('blur', () => {
+      allowToggle = true; // 失去焦点时允许折叠
+    });
+
 
     tocContainer.addEventListener('click', e => {
       const item = e.target.closest('.toc-item'); if(!item) return;
@@ -1242,19 +1423,18 @@ const DEFAULT_TAG_COLOR = '#5b6cf7';
 
     // 粘贴时过滤格式：只保留 <b>, <i>, <u> 标签
     contentEditor.addEventListener('paste', (e) => {
-      e.preventDefault();  // 阻止默认粘贴
-
-      // 获取纯文本
-      const text = (e.clipboardData || window.clipboardData).getData('text/plain');
-
-      // 将纯文本中的换行转换为 <br>，并保留原始空格（用 pre-wrap 配合）
-      let html = text.replace(/\n/g, '<br>');
-
-      // 如果想让换行更自然，也可以保留多个空格（非必须）
-      // html = html.replace(/ {2,}/g, (match) => '&nbsp;'.repeat(match.length));
-
-      // 插入处理后的干净 HTML（也可以直接用纯文本插入，看你更喜欢哪种）
-      document.execCommand('insertHTML', false, html);
+      e.preventDefault();
+      // 获取粘贴的 HTML
+      const html = (e.clipboardData || window.clipboardData).getData('text/html');
+      if (html) {
+        // 清洗 HTML：去掉颜色、字体、对齐等，只保留 b/i/u 和列表
+        const cleaned = cleanContentFormat(html);
+        document.execCommand('insertHTML', false, cleaned);
+      } else {
+        // 如果没有 HTML（纯文本），直接插入文本
+        const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+        document.execCommand('insertText', false, text);
+      }
     });
 
     exportJsonBtn.addEventListener('click', exportJson);
