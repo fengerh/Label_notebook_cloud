@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes, viewport-fit=cover">
-  <title>云端标签笔记 v20260508.1040</title>
+  <title>云端标签笔记 v20260508.1310</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -109,7 +109,19 @@
 
     #noteContentEditor { min-height:120px; max-height:400px; overflow-y:auto; border:1.5px solid #dce2ec; border-radius:18px; padding:10px 12px; font-size:0.95rem; background:white; outline:none; line-height:1.6; 
       word-break: break-word;      /* 强制长单词/链接自动断行 */
-      white-space: pre-wrap;       /* 保留空格与换行，同时允许自动折行 */}
+      white-space: pre-wrap;       /* 保留空格与换行，同时允许自动折行 */
+      font-size: 0.9rem !important; /* 全局统一字号 */
+      color: #2e405b;                /* 统一文字颜色，和笔记卡片一致 */
+      line-height: 1.6;
+    }
+    
+      /* 强制所有内部元素继承字号和颜色，清除外部带来的样式 */
+    #noteContentEditor * {
+      font-size: inherit !important;
+      color: inherit !important;
+      font-family: inherit !important;
+      background: transparent !important;
+    }
     #noteContentEditor:focus { border-color:#5b6cf7; }
     #noteContentEditor:empty:before {
       content: attr(placeholder);
@@ -253,16 +265,19 @@
       gap: 8px;
     }
 
-    /* @media (max-width: 480px) {
-      .note-footer {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
+    .shortcut-hint {
+      font-size: 0.9rem;
+      color: #5b6cf7;
+      margin-left: 8px;
+      white-space: nowrap;
+    }
+
+    /* 移动端隐藏快捷键提示 */
+    @media (max-width: 640px) {
+      .shortcut-hint {
+        display: none;
       }
-      .note-actions {
-        align-self: flex-end;
-      }
-    } */
+    }
 
   </style>
 </head>
@@ -358,6 +373,7 @@
           </div>
         </div>
         <div class="form-actions">
+          <span class="shortcut-hint" >Ctrl+B 加粗、Ctrl+I 斜体、Ctrl+U 下划线</span>
           <button type="button" id="insertImageBtn" class="btn">插入图片</button>
           <input type="file" id="imageFileInput" accept="image/*" class="hidden-file-input">
           <span id="editingStatus" style="display:none;" class="editing-indicator"><i class="fas fa-pen"></i> 正在编辑</span>
@@ -570,13 +586,24 @@ const DEFAULT_TAG_COLOR = '#5b6cf7';
 
     async function saveNoteToDB(title, tag, content) {
       if(!title.trim() || !content.trim()) return false;
-      const noteData = { user_id: currentUser.id, title: title.trim(), content: content.trim(), tag: tag.trim() || '未分类', color: currentSelectedColor,          // 保存笔记自身的颜色
-      updated_at: new Date().toISOString() };
+
+      // 清洗内容，只保留 b/i/u 标签，清除颜色、字体大小等
+      const cleanedContent = cleanContentFormat(content.trim());
+
+      const noteData = {
+        user_id: currentUser.id,
+        title: title.trim(),
+        content: cleanedContent,        // 使用清洗后的内容
+        tag: tag.trim() || '未分类',
+        color: currentSelectedColor,    // 如果笔记颜色还存在的话
+        updated_at: new Date().toISOString()
+      };
+
       if(editingId) {
         const oldNote = notes.find(n => n.id === editingId);
         if(oldNote) {
           const oldPaths = extractImagePaths(oldNote.content);
-          const newPaths = extractImagePaths(noteData.content);
+          const newPaths = extractImagePaths(cleanedContent);
           const toRemove = oldPaths.filter(p => !newPaths.includes(p));
           if(toRemove.length) {
             const { error: delError } = await supabaseClient.storage.from('notes-images').remove(toRemove);
@@ -589,9 +616,10 @@ const DEFAULT_TAG_COLOR = '#5b6cf7';
         const { error } = await supabaseClient.from('notes').insert(noteData);
         if(error){ alert('创建失败'); return false; }
       }
-      //await syncTagColor(formatTag(noteData.tag), currentSelectedColor); // 不再同步标签颜色
+      // 不再需要 syncTagColor
       return true;
     }
+
 
     function extractImagePaths(content) {
       const paths = [];
@@ -604,6 +632,39 @@ const DEFAULT_TAG_COLOR = '#5b6cf7';
       }
       return paths;
     }
+
+    function cleanContentFormat(html) {
+      if (!html) return '';
+      // 用 DOM 解析，安全高效
+      const div = document.createElement('div');
+      div.innerHTML = html;
+
+      // 递归遍历所有节点，移除 style 属性，只保留允许的标签
+      function walk(node) {
+        if (node.nodeType !== 1) return; // 不是元素节点，跳过
+        // 移除所有 style 属性
+        node.removeAttribute('style');
+        // 移除不该存在的标签（如 font, span 但保留文字内容）
+        if (node.tagName === 'FONT') {
+          // 将 font 节点替换为其内部文字
+          while (node.firstChild) {
+            node.parentNode.insertBefore(node.firstChild, node);
+          }
+          node.parentNode.removeChild(node);
+          return;
+        }
+        // 把可能带有内联样式的常用标签也做处理
+        if (node.tagName === 'SPAN') {
+          // 移除 style，保留文字
+          node.removeAttribute('style');
+          // 如果 span 没有其他有用属性，可以展开（但保留也不会影响显示，因为 CSS 会强制继承）
+        }
+        // 递归处理子节点
+        Array.from(node.childNodes).forEach(child => walk(child));
+      }
+      walk(div);
+      return div.innerHTML;
+    }                                 
 
     async function deleteNoteWithImages(id) {
       const note = notes.find(n => n.id === id);
@@ -1177,6 +1238,23 @@ const DEFAULT_TAG_COLOR = '#5b6cf7';
         const btn = e.target.closest('.img-btn-wrapper');
         if(btn) { const src = btn.dataset.imgSrc; if(src) showLightbox(src); }
       }
+    });
+
+    // 粘贴时过滤格式：只保留 <b>, <i>, <u> 标签
+    contentEditor.addEventListener('paste', (e) => {
+      e.preventDefault();  // 阻止默认粘贴
+
+      // 获取纯文本
+      const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+
+      // 将纯文本中的换行转换为 <br>，并保留原始空格（用 pre-wrap 配合）
+      let html = text.replace(/\n/g, '<br>');
+
+      // 如果想让换行更自然，也可以保留多个空格（非必须）
+      // html = html.replace(/ {2,}/g, (match) => '&nbsp;'.repeat(match.length));
+
+      // 插入处理后的干净 HTML（也可以直接用纯文本插入，看你更喜欢哪种）
+      document.execCommand('insertHTML', false, html);
     });
 
     exportJsonBtn.addEventListener('click', exportJson);
