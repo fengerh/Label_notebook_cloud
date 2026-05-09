@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes, viewport-fit=cover">
-  <title>云端标签笔记 v20260508.1630</title>
+  <title>云端标签笔记 v20260509.1350</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -80,7 +80,21 @@
     .color-btn { width:36px; height:36px; border-radius:18px; border:2px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.1); cursor:pointer; background:#ccc; transition:transform 0.1s; }
     .color-btn:hover { transform:scale(1.05); }
     .color-picker-dropdown { position:relative; display:inline-block; }
-    .color-options { display:none; position:absolute; right:0; top:42px; background:white; border-radius:20px; box-shadow:0 8px 20px rgba(0,0,0,0.12); padding:8px; z-index:100; grid-template-columns:repeat(4,1fr); gap:6px; border:1px solid #e2e8f0; }
+    
+    .color-options { 
+      display:none; 
+      position:absolute; /* 改为absolute，相对于父容器（颜色选择器）定位 */
+      right:0; 
+      top: calc(100% + 10px); /* 紧贴颜色按钮下方，避免被遮挡 */
+      background:white; 
+      border-radius:20px; 
+      box-shadow:0 8px 20px rgba(0,0,0,0.12); 
+      padding:8px; 
+      z-index:120; 
+      grid-template-columns:repeat(4,1fr); 
+      gap:6px; 
+      border:1px solid #e2e8f0; 
+    }
     .color-options.show { display:grid; }
     .color-option { width:32px; height:32px; border-radius:16px; cursor:pointer; border:2px solid transparent; transition:border 0.1s; }
     .color-option:hover { border-color:#5b6cf7; }
@@ -149,11 +163,48 @@
       align-items: center;
       justify-content: flex-end; /*靠右排列 */
     }
-    /* 让插入图片按钮在最左边 */
+    
+
     #insertImageBtn {
+      background: #f1f4f9;
+      border: 1px solid #dce2ec;
+      border-radius: 8px;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: #5b6cf7;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
       order: -1; /* 确保它在最左边 */
       margin-right: auto; /* 将其他按钮推到右边 */
     }
+    #insertImageBtn:hover {
+      background: #e6eaff;
+    }
+    #insertImageBtn:active {
+      background: #dce2f0;
+    }
+
+    /* 移动端可以再小一圈（可选） */
+    @media (max-width: 640px) {
+      #insertImageBtn {
+        padding: 4px 8px;
+      }
+    }
+
+    /* 箭头基础样式，保证过渡有效 */
+    .action-btn i {
+      display: inline-block;
+      transition: transform 0.2s ease;
+    }
+
+    /* 标签下拉展开时箭头旋转 180 度 */
+    .input-with-action.expanded .action-btn i {
+      transform: rotate(180deg);
+    }
+
 
     .filter-section { padding:0; border-bottom:1px solid #eef1f5; background:white; }
     .filter-controls { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; padding:8px 16px 12px 16px; min-height:44px; }
@@ -190,9 +241,9 @@
       flex-wrap: nowrap;
     }
     /* 内容行：内容和插入图片同行，下方是输入框 */
-    .editor-toolbar {
+    /* .editor-toolbar {
       flex-wrap: nowrap;
-    }
+    } */
   }
 
     .main-layout { display:flex; flex:1; overflow:hidden; }
@@ -237,7 +288,7 @@
 
     .empty-msg { text-align:center; padding:30px; color:#7f8fa3; }
     .hidden-file-input { display:none; }
-    .editing-indicator { background:#eef2ff; color:#4355e8; padding:4px 12px; border-radius:20px; font-size:0.8rem; margin-right:auto; }
+    /* .editing-indicator { background:#eef2ff; color:#4355e8; padding:4px 12px; border-radius:20px; font-size:0.8rem; margin-right:auto; } */
 
     @media (max-width: 640px) {
       .search-box input { width:150px; }
@@ -253,16 +304,16 @@
     }
 
     /* 电脑端（宽度>640px）隐藏上传图片按钮 */
-    @media (min-width: 641px) {
+    /* @media (min-width: 641px) {
       #insertImageBtn {
-        display: none !important; /* 强制隐藏，避免样式冲突 */
-      }
-    }
+        display: none !important; 强制隐藏，避免样式冲突 */
+      /* } */
+    /* } */
 
     /* 移动端（宽度≤640px）显示上传图片按钮（保持原有样式） */
     @media (max-width: 640px) {
       #insertImageBtn {
-        display: inline-flex !important; /* 恢复显示 */
+       display: inline-flex !important;  /* 恢复显示 */
         order: -1; /* 确保在最左边 */
         margin-right: auto; /* 把其他按钮推到右边 */
       }
@@ -296,18 +347,13 @@
     }
 
     .shortcut-hint {
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       color: #5b6cf7;
       margin-left: 8px;
       white-space: nowrap;
     }
 
-    /* 移动端隐藏快捷键提示 */
-    @media (max-width: 640px) {
-      .shortcut-hint {
-        display: none;
-      }
-    }
+   
 
     /* 防止安卓点击搜索框时页面缩放 */
     @media (max-width: 640px) {
@@ -327,6 +373,170 @@
         touch-action: none; /* 防止触摸滚动干扰 */
       }
     }
+
+    .color-picker-dropdown {
+      position: static; /* 关键：不再是 relative */
+    }
+    /* 输入框+颜色选择器的容器 */
+    .input-with-color {
+      position: relative;
+      flex: 1;                /* 占满剩余宽度 */
+      display: flex;
+      align-items: center;
+      overflow: visible;   /* 允许弹出层超出容器边界 */
+      z-index: 120;             /* 确保在其他元素之上 */
+    }
+
+    /* 输入框右边留出颜色按钮的空间 */
+    .input-with-color input {
+      width: 100%;
+      padding-right: 40px;    /* 防止文字被颜色按钮遮挡 */
+    }
+
+    /* 颜色选择器绝对定位到输入框内部右侧 */
+    .input-with-color .color-selector {
+      position: absolute;
+      right: 8px;             /* 与输入框右边框保持距离 */
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+    }
+
+    /* 颜色选择器弹出层的位置保持不变（仍是相对于 color-picker-dropdown） */
+    .color-picker-dropdown {
+      position: relative;
+    }
+    
+    .color-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 14px;
+    }
+
+    /* 编辑器外层容器：统一样式，包裹可编辑区域和底部栏 */
+    .editor-wrapper {
+      display: flex;
+      flex-direction: column;
+      border: 1.5px solid #dce2ec;
+      border-radius: 18px;
+      overflow: hidden;           /* 保持圆角裁切 */
+      background: white;
+    }
+
+    /* 移除原编辑器的独立边框，让它融入 wrapper */
+    #noteContentEditor {
+      border: none !important;
+      border-radius: 0 !important;
+      min-height: 120px;
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      outline: none;
+      flex: 1;                   /* 占据剩余空间 */
+      word-break: break-word;
+      white-space: pre-wrap;
+      color: #2e405b;
+      background: white;
+    }
+
+    /* 底部操作栏：浅色背景，右对齐 */
+    .editor-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 8px 12px;
+      background: #fafbff;
+      border-top: 1px solid #e9ecf2;
+      gap: 8px;
+    }
+
+    /* “正在编辑”提示保持左对齐，利用 margin-right:auto 推向左侧 */
+    .editing-indicator {
+      margin-right: auto;
+    }
+
+    /* 快捷键提示在电脑端显示，手机端隐藏（保留原有样式） */
+    
+    @media (max-width: 640px) {
+      .shortcut-hint { display: none; }
+    }
+
+    /* 如果觉得底部按钮过大，可以微调 */
+    .editor-footer .btn {
+      padding: 6px 16px;
+      font-size: 0.9rem;
+    }
+
+    /* 通用容器：输入框 + 右侧操作按钮 */
+    .input-with-action {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+
+    /* 输入框右边留出按钮空间 */
+    .input-with-action input {
+      width: 100%;
+      padding-right: 38px;
+    }
+
+    /* 右侧按钮（颜色点、下拉箭头等）统一放置 */
+    .action-btn {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      font-size: 1rem;
+      color: #5b6cf7;
+      cursor: pointer;
+      padding: 4px 6px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* 下拉列表样式（与颜色选择器弹出层类似） */
+    .action-list {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 4px);
+      width: 200px;
+      max-height: 180px;
+      overflow-y: auto;
+      background: white;
+      border: 1px solid #dce2ec;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      z-index: 110;
+      list-style: none;
+      margin: 0;
+      padding: 6px 0;
+    }
+
+    .action-list li {
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      color: #2c3e50;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .action-list li:hover {
+      background: #f1f4f9;
+    }
+
+    /* 移动端列表宽度调整 */
+    @media (max-width: 640px) {
+      .action-list {
+        width: 160px;
+      }
+    }   
+
   </style>
 </head>
 <body>
@@ -392,18 +602,41 @@
           <div class="form-group">
             <div class="title-row">
               <label>标题</label>
-              <input type="text" id="noteTitleInput" placeholder="例如：项目复盘" required>
-              <div class="color-selector">
-                <div class="color-picker-dropdown" id="colorPickerDropdown">
-                  <div class="color-btn" id="selectedColorBtn" style="background:#5b6cf7;"></div>
-                  <div class="color-options" id="colorOptions"></div>
+              <!-- 新增一个相对定位的容器，包裹输入框+颜色选择器 -->
+              <div class="input-with-color">
+                <input type="text" id="noteTitleInput" placeholder="例如：项目复盘" required>
+                <div class="color-selector">
+                  <div class="color-picker-dropdown" id="colorPickerDropdown">
+                    <div class="color-btn" id="selectedColorBtn" style="background:#5b6cf7;"></div>
+                    <div class="color-options" id="colorOptions"></div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <!-- 标签行：标签 | 选择标签 | 标签内容 -->
+
+
+        <!-- 标签行：标签 | 输入框 + 下拉按钮 -->
         <div class="form-row">
+          <div class="form-group">
+            <div class="tag-input-wrapper">
+              <label>标签</label>
+              <div class="input-with-action" id="tagActionWrapper">
+                <input type="text" id="noteTagInput" placeholder="输入新标签 或 选择已有标签" autocomplete="off">
+                <button type="button" class="action-btn" id="tagDropdownBtn" title="选择已有标签">
+                  <i class="fas fa-chevron-down"></i>
+                </button>
+                <ul class="action-list" id="tagDropdownList" style="display:none;"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        
+
+        <!-- 标签行：标签 | 选择标签 | 标签内容 -->
+        <!-- <div class="form-row">
           <div class="form-group">
             <div class="tag-input-wrapper">
               <label>标签</label>
@@ -411,13 +644,40 @@
               <input type="text" id="noteTagInput" placeholder="或输入新标签">
             </div>
           </div>
-        </div>
+        </div> -->
         <!-- 内容行：内容 | 插入图片按钮 -->
         <div class="form-row">
           <div class="form-group">
+            <!-- 工具栏：标签 + 格式按钮 + 快捷键提示 + 插入图片 -->
+            <!-- <div class="editor-toolbar"> -->
+              <!-- <label>内容</label> -->
+              
+              
+            <!-- </div> -->
+
+            <!-- 编辑器 + 底部操作栏的融合容器 -->
+            <div class="editor-wrapper">
+              <div id="noteContentEditor" contenteditable="true" placeholder="写点什么内容……"></div>
+              <div class="editor-footer">
+                <button type="button" id="insertImageBtn"> 插入图片</button>
+                <input type="file" id="imageFileInput" accept="image/*" class="hidden-file-input">
+                <!-- <span id="editingStatus" style="display:none;" class="editing-indicator">
+                  <i class="fas fa-pen"></i> 正在编辑
+                </span> -->
+                <span class="shortcut-hint">Ctrl+B 加粗 · Ctrl+I 斜体 · Ctrl+U 下划线</span>
+                <button type="submit" class="btn btn-primary" id="saveNoteBtn">
+                  <i class="fas fa-check"></i> 保存
+                </button>
+                <button type="button" class="btn btn-secondary" id="cancelEditBtn" style="display:none;">取消</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- <div class="form-row">
+          <div class="form-group">
              <div id="noteContentEditor" contenteditable="true" placeholder="请输入具体内容"></div>
-             <!-- <input type="text" id="noteContentEditor" placeholder="请输入具体内容" required> -->
-            <!-- <textarea id="noteContentEditor" placeholder="请输入具体内容"></textarea> -->
           </div>
         </div>
         <div class="form-actions">
@@ -427,7 +687,7 @@
           <span id="editingStatus" style="display:none;" class="editing-indicator"><i class="fas fa-pen"></i> 正在编辑</span>
           <button type="submit" class="btn btn-primary" id="saveNoteBtn"><i class="fas fa-check"></i> 保存</button>
           <button type="button" class="btn btn-secondary" id="cancelEditBtn" style="display:none;">取消</button>
-        </div>
+        </div> -->
         <input type="hidden" id="editingId" value="">
       </form>
     </div>
@@ -543,6 +803,8 @@ const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
     const updatePasswordBtn = document.getElementById('updatePasswordBtn');
     const cancelRecoveryBtn = document.getElementById('cancelRecoveryBtn');
     const recoveryMessage = document.getElementById('recoveryMessage');
+    const tagDropdownBtn = document.getElementById('tagDropdownBtn');
+    const tagDropdownList = document.getElementById('tagDropdownList');
     
     // 在文件顶部添加安卓检测
     const isAndroid = /Android/.test(navigator.userAgent);
@@ -559,15 +821,16 @@ const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
         userEmailDisplay.textContent = user.email;
         await loadNotes();
         await loadAppTitle();
+        autoToggleFilter();
 
         // 登录后执行一次折叠（仅限移动端）
-        setTimeout(() => {
-          const isMobile = window.innerWidth <= 640;
-          if (isMobile) {
-            filterSection.classList.add('collapsed');
-            filterToggleIcon.className = 'fas fa-chevron-down';
-          }
-        }, 100);
+        // setTimeout(() => {
+        //   const isMobile = window.innerWidth <= 640;
+        //   if (isMobile) {
+        //     filterSection.classList.add('collapsed');
+        //     filterToggleIcon.className = 'fas fa-chevron-down';
+        //   }
+        // }, 100);
 
       } else {
         authContainer.style.display = 'flex';
@@ -787,7 +1050,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
       const file = e.target.files[0]; if(!file) return;
       try {
         insertImageBtn.disabled = true;
-        insertImageBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...';
+        insertImageBtn.innerHTML = '上传中...';
         const blob = await compressImage(file);
         const url = await uploadImage(blob);
         contentEditor.focus();
@@ -798,45 +1061,88 @@ const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
       } catch(err) { alert('上传失败: ' + err.message); }
       finally {
         insertImageBtn.disabled = false;
-        insertImageBtn.innerHTML = '<i class="far fa-image"></i> 插入图片';
+        insertImageBtn.innerHTML = '插入图片';
         imageFileInput.value = '';
       }
     });
 
     // 标签下拉联动
-    function populateTagSelect() {
+    // function populateTagSelect() {
+    //   const tags = getAllTags().sort((a,b) => a.localeCompare(b));
+    //   tagSelect.innerHTML = '<option value="">（选择标签）</option>';
+    //   tags.forEach(tag => {
+    //     const opt = document.createElement('option');
+    //     opt.value = tag;
+    //     opt.textContent = tag;
+    //     tagSelect.appendChild(opt);
+    //   });
+    //   const curInput = tagInput.value.trim();
+    //   if (curInput && tags.includes(curInput)) {
+    //     tagSelect.value = curInput;
+    //   } else {
+    //     tagSelect.value = '';
+    //   }
+    // }
+
+    function populateTagDropdown() {
       const tags = getAllTags().sort((a,b) => a.localeCompare(b));
-      tagSelect.innerHTML = '<option value="">（选择标签）</option>';
-      tags.forEach(tag => {
-        const opt = document.createElement('option');
-        opt.value = tag;
-        opt.textContent = tag;
-        tagSelect.appendChild(opt);
-      });
-      const curInput = tagInput.value.trim();
-      if (curInput && tags.includes(curInput)) {
-        tagSelect.value = curInput;
+      let html = '';
+      if (tags.length === 0) {
+        html = '<li style="color:#999; font-style:italic;">暂无标签</li>';
       } else {
-        tagSelect.value = '';
+        tags.forEach(tag => {
+          html += `<li data-tag="${tag.replace(/"/g, '&quot;')}">${tag}</li>`;
+        });
       }
+      tagDropdownList.innerHTML = html;
     }
 
-    tagSelect.addEventListener('change', () => {
-      const val = tagSelect.value;
-      if (val) {
-        tagInput.value = val;
-        // const color = tagColorMap[val] || DEFAULT_TAG_COLOR;
-        // currentSelectedColor = color;
-        // selectedColorBtn.style.background = color;
+    // 点击下拉按钮，显示/隐藏列表
+    tagDropdownBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // 互斥：先关闭颜色盘
+      colorOptionsDiv.classList.remove('show');
+      const wrapper = document.getElementById('tagActionWrapper');
+      const isVisible = tagDropdownList.style.display === 'block';
+      if (isVisible) {
+        tagDropdownList.style.display = 'none';
+        wrapper.classList.remove('expanded');
       } else {
-        // 选择了空白项，清空输入框并重置颜色
-        tagInput.value = '';
-        // currentSelectedColor = DEFAULT_TAG_COLOR;
-        // selectedColorBtn.style.background = DEFAULT_TAG_COLOR;
+        populateTagDropdown();
+        tagDropdownList.style.display = 'block';
+        wrapper.classList.add('expanded');
       }
     });
 
-    tagInput.addEventListener('input', () => { tagSelect.value = ''; });
+    // 点击其他地方关闭列表时也要移除 expanded 类
+    document.addEventListener('click', (e) => {
+      // 关闭颜色盘（如果点击的不是颜色选择器区域）
+      if (!e.target.closest('#colorPickerDropdown')) {
+        colorOptionsDiv.classList.remove('show');
+      }
+
+      // 关闭标签下拉列表（如果点击的不是标签按钮区域）
+      if (!e.target.closest('#tagActionWrapper')) {
+        tagDropdownList.style.display = 'none';
+        const arrowIcon = tagDropdownBtn.querySelector('i');
+        if (arrowIcon) arrowIcon.classList.remove('icon-rotated');
+      }
+    });
+
+    // 点击列表项，填入输入框
+    tagDropdownList.addEventListener('click', (e) => {
+      const item = e.target.closest('li');
+      if (!item || !item.dataset.tag) return;
+      tagInput.value = item.dataset.tag;
+      tagDropdownList.style.display = 'none';
+      
+    });
+
+    
+
+    
+
+   // tagInput.addEventListener('input', () => { tagSelect.value = ''; });
 
     // UI 渲染
     function initColorPicker() {
@@ -846,7 +1152,17 @@ const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
       colors.forEach(c => html += `<div class="color-option" style="background:${c};" data-color="${c}"></div>`);
       colorOptionsDiv.innerHTML = html;
 
-      selectedColorBtn.addEventListener('click', e => { e.stopPropagation(); colorOptionsDiv.classList.toggle('show'); });
+      selectedColorBtn.addEventListener('click', e => { 
+        e.stopPropagation(); 
+        // 互斥：先关闭标签下拉列表
+        const tagList = document.getElementById('tagDropdownList');
+        const tagArrow = document.getElementById('tagDropdownBtn').querySelector('i');
+        if (tagList.style.display === 'block') {
+          tagList.style.display = 'none';
+          tagArrow.classList.remove('icon-rotated');      // 确保箭头复原
+        }
+        colorOptionsDiv.classList.toggle('show'); 
+      });
       colorOptionsDiv.addEventListener('click', e => {
         const opt = e.target.closest('.color-option');
         if(opt){
@@ -981,18 +1297,24 @@ const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
       notesContainer.innerHTML = cards;
     }
 
-    function renderAll() { renderFilters(); renderTOC(); renderNotes(); populateTagSelect(); }
+    function renderAll() { renderFilters(); renderTOC(); renderNotes();populateTagDropdown();
+       //populateTagSelect(); 
+      }
+
+    
 
     function resetFormState() {
-      editingId = null; editingIdInput.value = '';
-      titleInput.value = tagInput.value = ''; contentEditor.innerHTML = '';
+      editingId = null; 
+      editingIdInput.value = '';
+      titleInput.value = tagInput.value = ''; 
+      contentEditor.innerHTML = '';
       toggleText.textContent = '添加新笔记';
       saveNoteBtn.innerHTML = '<i class="fas fa-check"></i> 保存';
-      editingStatus.style.display = 'none';
+      //editingStatus.style.display = 'none';
       cancelEditBtn.style.display = 'none';
       //currentSelectedColor = DEFAULT_TAG_COLOR;
       //selectedColorBtn.style.background = DEFAULT_TAG_COLOR;
-      tagSelect.value = '';
+     // tagSelect.value = '';
     }
 
     function startEditNote(id) {
@@ -1006,11 +1328,13 @@ const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
       selectedColorBtn.style.background = currentSelectedColor;
 
       toggleText.textContent = `编辑笔记 · ${note.title.substring(0,15)}`;
-      saveNoteBtn.innerHTML = '<i class="fas fa-save"></i> 更新';
-      editingStatus.style.display = 'inline-flex'; cancelEditBtn.style.display = 'inline-flex';
+      saveNoteBtn.innerHTML = '<i class="fas fa-save"></i> 保存更新';
+      //editingStatus.style.display = 'inline-flex'; 
+      cancelEditBtn.style.display = 'inline-flex';
       addWrapper.classList.add('expanded');
       titleInput.focus();
-      populateTagSelect();
+      //populateTagSelect();
+      populateTagDropdown()
     }
 
     async function handleFormSubmit(e) {
@@ -1081,7 +1405,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
         await supabaseClient.from('notes').insert({ user_id:currentUser.id, title:item.title, content:item.content, tag:item.tag||'未分类' });
       }
       if(importedColors) {
-        for(const [tag,color] of Object.entries(importedColors)) await syncTagColor(tag,color);
+        for(const [tag,color] of Object.entries(importedColors)); //await syncTagColor(tag,color);
       }
       await loadNotes(); currentTag='全部'; resetFormState();
     }
@@ -1123,18 +1447,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
     }
 
     
-    // 折叠控制：整个标题条都能折叠“添加笔记”
-    addToggle.addEventListener('click', (e) => {
-      // 如果点击的是内容区域，不折叠
-      if (e.target.closest('.add-note-panel')) return;
-      
-      e.stopPropagation();
-      addWrapper.classList.toggle('expanded');
-      // 如果面板被折叠了，重置表单
-      if (!addWrapper.classList.contains('expanded')) {
-        resetFormState();
-      }
-    });
+    
 
     // 箭头按钮单独处理（可选，如果你想要特殊效果）
     const addNoteToggleBtn = addToggle.querySelector('.header-toggle-btn');
@@ -1192,18 +1505,13 @@ const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
     const addNotePanel = document.querySelector('.add-note-panel');
     addNotePanel.addEventListener('click', e => e.stopPropagation());
 
-    appHeaderToggleBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      appHeaderWrap.classList.toggle('collapsed');
-      const isCollapsed = appHeaderWrap.classList.contains('collapsed');
-      appHeaderToggleIcon.className = isCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
-    });
+    
 
     function toggleToc() {
       tocSidebar.classList.toggle('collapsed');
       tocToggleIcon.className = tocSidebar.classList.contains('collapsed') ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
     }
-    tocHeader.addEventListener('click', toggleToc);
+    
 
 
     // 修改 toggleFilter 函数
@@ -1211,6 +1519,15 @@ const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
       // 安卓设备特殊处理
       if (isAndroid) {
         // 检查触摸位置是否在筛选控件内
+
+        // 如果点击发生在筛选控件区域内（搜索框、标签按钮、颜色圆点等），直接返回
+        if (e && e.target) {
+          const filterControls = document.getElementById('filterControls');
+          if (filterControls && filterControls.contains(e.target)) {
+            return;
+          }
+        }
+
         if (e && e.type === 'touchstart') {
           const touch = e.touches[0];
           const filterControls = document.getElementById('filterControls');
@@ -1326,20 +1643,30 @@ const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
       }
     }
     // 修改 autoToggleFilter 函数
+    // function autoToggleFilter() {
+    //   const isMobile = window.innerWidth <= 640;
+    //   if (isMobile && !isAndroid) { // 安卓设备不自动折叠
+    //     filterSection.classList.add('collapsed');
+    //     filterToggleIcon.className = 'fas fa-chevron-down';
+    //   } else if (isMobile && isAndroid) {
+    //     // 安卓设备始终展开
+    //     filterSection.classList.remove('collapsed');
+    //     filterToggleIcon.className = 'fas fa-chevron-up';
+    //   } else {
+    //     filterSection.classList.add('collapsed');
+    //     filterToggleIcon.className = 'fas fa-chevron-down';
+    //   }
+    // }
+
     function autoToggleFilter() {
-      const isMobile = window.innerWidth <= 640;
-      if (isMobile && !isAndroid) { // 安卓设备不自动折叠
-        filterSection.classList.add('collapsed');
-        filterToggleIcon.className = 'fas fa-chevron-down';
-      } else if (isMobile && isAndroid) {
-        // 安卓设备始终展开
-        filterSection.classList.remove('collapsed');
-        filterToggleIcon.className = 'fas fa-chevron-up';
-      } else {
-        filterSection.classList.add('collapsed');
-        filterToggleIcon.className = 'fas fa-chevron-down';
-      }
+      // 所有设备统一默认折叠筛选区域
+      filterSection.classList.add('collapsed');
+      filterToggleIcon.className = 'fas fa-chevron-down';
+      // 如果焦点在输入框内，说明键盘可能弹起，不自动折叠
+      if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+
     }
+
     function autoToggleAppHeader() {
       const isMobile = window.innerWidth <= 640;
       if(isMobile) {
@@ -1358,6 +1685,44 @@ const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
     }
     // 手机端（宽度≤640px）不自动折叠！
   }
+
+    // 在 appContainer 上委托所有折叠事件（确保登录后仍然有效）
+    appContainer.addEventListener('click', (e) => {
+      // 添加笔记的折叠（点击标题栏或箭头按钮）
+      const addToggle = e.target.closest('#addNoteToggle');
+      if (addToggle && !e.target.closest('.add-note-panel')) {
+        addWrapper.classList.toggle('expanded');
+        if (!addWrapper.classList.contains('expanded')) resetFormState();
+        return;
+      }
+
+      // 目录折叠
+      const tocHeaderEl = e.target.closest('#tocHeader');
+      if (tocHeaderEl) {
+        tocSidebar.classList.toggle('collapsed');
+        tocToggleIcon.className = tocSidebar.classList.contains('collapsed') ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+        return;
+      }
+
+      // 筛选折叠
+      const filterHeaderEl = e.target.closest('#filterHeader');
+      if (filterHeaderEl) {
+        filterSection.classList.toggle('collapsed');
+        const isCollapsed = filterSection.classList.contains('collapsed');
+        filterToggleIcon.className = isCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+        return;
+      }
+
+      // 头部折叠
+      const appHeaderBtn = e.target.closest('#appHeaderToggleBtn');
+      if (appHeaderBtn) {
+        e.stopPropagation();
+        appHeaderWrap.classList.toggle('collapsed');
+        const isCollapsed = appHeaderWrap.classList.contains('collapsed');
+        appHeaderToggleIcon.className = isCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+        return;
+      }
+    }); 
     
     // function autoToggleAddNote() {
     //   addWrapper.classList.remove('expanded');
@@ -1505,7 +1870,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
         // 仍然继续执行后续的认证状态检查，但 recovery 会覆盖显示
         } else {
         autoToggleToc();
-        autoToggleFilter();
+        //autoToggleFilter();
         autoToggleAppHeader();
         autoToggleAddNote();
         refreshAuthUI();
@@ -1524,6 +1889,8 @@ const SUPABASE_ANON_KEY = 'sb_publishable_PooXZHGfCN7Rcg2NcXA5HQ_rP1pcDm3';
     });
 
   })();
+
+  
 </script>
 </body>
 </html>
