@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes, viewport-fit=cover">
-  <title>云端标签笔记 v20260510.1350</title>
+  <title>云端标签笔记 v20260510.1500</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -47,11 +47,11 @@
     @media(max-width:480px){ .icon-btn span{display:none;} .icon-btn{padding:8px 12px;} }
 
     .add-note-wrapper { background:#fafbff; border-bottom:1px solid #e9ecf2; }
-    .add-note-panel { padding:16px 16px 16px 16px; display:none; }
+    .add-note-panel { padding:8px 16px 8px 16px; display:none; }
     .add-note-wrapper.expanded .add-note-panel { display:block; }
     .add-note-wrapper.expanded .fa-chevron-down { transform:rotate(180deg); }
 
-    .add-form { display:flex; flex-direction:column; gap:12px; }
+    .add-form { display:flex; flex-direction:column; gap:8px; }
     .form-row { display:flex; flex-direction:column; gap:8px; width:100%; }
 
     /* 通用表单组 */
@@ -85,8 +85,7 @@
       display:none; 
       position:absolute; /* 改为absolute，相对于父容器（颜色选择器）定位 */
       right: -8px; /* 与颜色按钮保持对齐 */; 
-
-      top: calc(100% + 10px); /* 紧贴颜色按钮下方，避免被遮挡 */
+      top: calc(100% + 6px); /* 紧贴颜色按钮下方，避免被遮挡 */
       background:white; 
       border-radius:20px; 
       box-shadow:0 8px 20px rgba(0,0,0,0.12); 
@@ -218,7 +217,7 @@
 
 
     .filter-section { padding:0; border-bottom:1px solid #eef1f5; background:white; }
-    .filter-controls { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; padding:8px 16px 12px 16px; min-height:44px; }
+    .filter-controls { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; padding:8px 16px 8px 16px; min-height:44px; }
     .filter-section.collapsed .filter-controls { display:none; }
     .tag-filters { display:flex; flex-wrap:wrap; gap:6px; }
     .tag-btn { background:#f1f4f9; border:none; padding:5px 14px; border-radius:40px; font-size:0.8rem; font-weight:500; cursor:pointer; }
@@ -251,10 +250,7 @@
     .tag-input-wrapper {
       flex-wrap: nowrap;
     }
-    /* 内容行：内容和插入图片同行，下方是输入框 */
-    /* .editor-toolbar {
-      flex-wrap: nowrap;
-    } */
+    
   }
 
     .main-layout { display:flex; flex:1; overflow:hidden; }
@@ -316,12 +312,7 @@
       .tag-input-wrapper select { max-width: 120px; font-size:0.85rem; }
     }
 
-    /* 电脑端（宽度>640px）隐藏上传图片按钮 */
-    /* @media (min-width: 641px) {
-      #insertImageBtn {
-        display: none !important; 强制隐藏，避免样式冲突 */
-      /* } */
-    /* } */
+   
 
     /* 移动端（宽度≤640px）显示上传图片按钮（保持原有样式） */
     @media (max-width: 640px) {
@@ -516,9 +507,9 @@
     .action-list {
       position: absolute;
       right: 0;
-      top: calc(100% + 4px);
+      top: calc(100%);
       width: flex; /* 根据内容自动调整宽度 */
-      max-height: 180px;
+      max-height: 150px;
       overflow-y: auto;
       background: white;
       border: 1px solid #dce2ec;
@@ -713,9 +704,7 @@
             </div>
           </div>
         </div>
-
-
-       
+      
         <input type="hidden" id="editingId" value="">
       </form>
     </div>
